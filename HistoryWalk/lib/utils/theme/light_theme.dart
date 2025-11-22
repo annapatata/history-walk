@@ -3,6 +3,7 @@ import 'app_colors.dart';
 
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
+  fontFamily: 'Nunito',
   scaffoldBackgroundColor: AppColors.backgroundLight,
   primaryColor: AppColors.headingLight,
   appBarTheme: const AppBarTheme(
@@ -25,7 +26,6 @@ final ThemeData lightTheme = ThemeData(
     ),
   ),
   colorScheme: const ColorScheme.light(
-    background: AppColors.backgroundLight,
     primary: AppColors.headingLight,
     secondary: AppColors.symbolsLight,
     surface: AppColors.cardsLight,
