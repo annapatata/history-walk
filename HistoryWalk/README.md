@@ -1,4 +1,4 @@
-# Histoy Walk
+# History Walk
 
 A new Flutter project.
 
