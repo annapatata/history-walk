@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+import '../constants/app_colors.dart';
 
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
@@ -40,4 +40,22 @@ final ThemeData darkTheme = ThemeData(
       ),
     ),
   ),
+  navigationBarTheme: NavigationBarThemeData(
+    backgroundColor: AppColors.menuBarLight,
+    indicatorColor: Colors.transparent,
+    iconTheme: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
+        return IconThemeData(color: AppColors.symbolsLight); // selected
+      }
+        return IconThemeData(color: AppColors.textDark);   // unselected
+    }),
+    labelTextStyle: WidgetStateProperty.resolveWith(
+      (states) {
+      if (states.contains(WidgetState.selected)) {
+        return TextStyle(color: AppColors.symbolsLight, fontWeight: FontWeight.w600,);   // selected color
+      }
+        return TextStyle(color: Colors.pink, fontWeight: FontWeight.w400,);       // unselected color
+      },
+    ),
+),
 );
