@@ -1,4 +1,4 @@
-name: HistoryWalk
+name: historywalk
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -30,6 +30,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+    #Utility packages
+  http: ^1.1.0  #for api calls e.g user data, routes etc
+  intl: ^0.18.1  #internalization library - helps with dates,translations
+  logger: ^2.0.1 #for debugging
+  url_launcher: ^6.1.12 #opens links,maps,email apps, phone apps
+
+    # State Management 
+  get: ^4.6.5 # navigate between screens easily, manage controllers
+  get_storage: ^2.1.1
   
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -38,7 +48,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  flutter_native_splash: ^2.4.7
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -81,3 +91,9 @@ flutter:
         weight: 300
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_native_splash: 
+      color: "#FEB35F"
+      image: assets/logos/history-walk-logo.png
+      android: true
+      ios: true

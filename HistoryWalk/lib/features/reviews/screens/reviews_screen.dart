@@ -1,6 +1,6 @@
 // Reviews_screen.dart
 import 'package:flutter/material.dart';
-import 'package:HistoryWalk/features/routes/screens/routes_screen.dart';
+import 'package:historywalk/features/routes/screens/routes_screen.dart';
 
 class Review extends StatelessWidget
 {

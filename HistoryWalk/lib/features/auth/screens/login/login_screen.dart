@@ -1,8 +1,8 @@
-import 'package:HistoryWalk/navigation_menu.dart';
+import 'package:historywalk/navigation_menu.dart';
 import 'package:flutter/material.dart';
-import 'package:HistoryWalk/common/styles/spacing_styles.dart';
-import 'package:HistoryWalk/utils/constants/text_strings.dart';
-import 'package:HistoryWalk/utils/constants/sizes.dart';
+import 'package:historywalk/common/styles/spacing_styles.dart';
+import 'package:historywalk/utils/constants/text_strings.dart';
+import 'package:historywalk/utils/constants/sizes.dart';
 
 class LoginScreen extends StatelessWidget{
   const LoginScreen({super.key});

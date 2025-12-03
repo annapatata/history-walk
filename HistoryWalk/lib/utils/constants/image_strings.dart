@@ -1,9 +1,9 @@
 class AppImages {
 
   // App Logo
-  static const String AppLogo = "assets/logos/history-walk-logo.png";
+  static const String appLogo = "assets/logos/history-walk-logo.png";
 
   //Milo Figures
-  static const String MiloSearch = "assets/images/milo-search.png";
-  static const String MiloWave = "assets/images/milo-wave.png";
+  static const String miloSearch = "assets/images/milo-search.png";
+  static const String miloWave = "assets/images/milo-wave.png";
 }
