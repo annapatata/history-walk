@@ -6,7 +6,7 @@ class AppColors {
   static const backgroundDark = Color(0xFF5E3601);
 
   // Intro Background
-  static const introBackgroundLight = Color(0xFFFEB35F);
+  static const introBackgroundLight = Color(0xFFFEAF5A);
   static const introBackgroundDark = Color(0xFFB35E00);
 
   // Symbols / Icon color
@@ -40,4 +40,7 @@ class AppColors {
   // Headings
   static const headingLight = Color(0xFFC3630F);
   static const headingDark = Color(0xFFF6C69B);
+
+  //Stars
+  static const stars = Color(0xFFE8B931);
 }

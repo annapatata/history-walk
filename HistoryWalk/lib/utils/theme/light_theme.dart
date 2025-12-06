@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import 'extensions/route_box_theme.dart';
+import 'extensions/searchbar_theme.dart';
 
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
@@ -63,4 +65,21 @@ final ThemeData lightTheme = ThemeData(
       },
     ),
 ),
+extensions: <ThemeExtension<dynamic>>[
+  RouteBoxTheme(
+    backgroundColor: AppColors.routeCardLight,
+    textColor: AppColors.textLight,
+    iconColor: AppColors.symbolsLight,
+    borderRadius: 20,
+    elevation: 10,
+    starColor: AppColors.stars,
+  ),
+  SearchbarTheme(
+    backgroundColor: AppColors.searchBarLight,
+    textColor: AppColors.textLight,
+    iconColor: AppColors.symbolsLight,
+    borderRadius: 12,
+    elevation: 10,
+  ),
+],
 );

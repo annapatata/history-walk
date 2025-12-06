@@ -1,9 +1,9 @@
 // Reviews_screen.dart
 import 'package:flutter/material.dart';
-import 'package:historywalk/features/routes/screens/routes_screen.dart';
+import 'package:historywalk/features/routes/widgets/route_box.dart';
+import '../../routes/models/time_period.dart';
 
-class Review extends StatelessWidget
-{
+class Review extends StatelessWidget{
   //init
   Review({this.image = "icons/no_pfp.png", this.review = 'review text goes here', this.stars = 0, super.key});
   String image;
@@ -92,12 +92,12 @@ class ReviewsScreen extends StatelessWidget {
           RouteBox( 
                   title: "Echoes of Rome", 
                   image: "icons/image.png", 
-                  time: "10 BCE - 130 CE", 
-                  dur: "45 min", 
-                  dif: "Cakewalk", 
-                  stops: "Roman Agora, Hadrian's Library. Temple of Zeus", 
+                  timePeriod: TimePeriod(startYear: -10, endYear: 130), 
+                  duration: Duration(minutes: 45), 
+                  difficulty: "Cakewalk", 
+                  stops: ["Roman Agora","Hadrian's Library","Temple of Zeus"], 
                   stars: 4, 
-                  rn: reviews,
+                  reviewCount: reviews,
                 ),
                 
           Padding(//write a review
