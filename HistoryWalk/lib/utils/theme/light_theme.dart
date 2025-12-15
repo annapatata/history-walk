@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import 'extensions/route_box_theme.dart';
 import 'extensions/searchbar_theme.dart';
+import 'extensions/reviewtile_theme.dart';
 
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
@@ -80,6 +81,14 @@ extensions: <ThemeExtension<dynamic>>[
     iconColor: AppColors.symbolsLight,
     borderRadius: 12,
     elevation: 10,
+  ),
+  ReviewTileTheme(
+    backgroundColor: AppColors.cardsLight,
+    textColor: AppColors.textLight,
+    iconColor: AppColors.symbolsLight,
+    borderRadius: 20,
+    elevation: 10,
+    starColor: AppColors.stars,
   ),
 ],
 );

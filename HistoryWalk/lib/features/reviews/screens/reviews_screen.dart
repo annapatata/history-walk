@@ -2,58 +2,32 @@
 import 'package:flutter/material.dart';
 import 'package:historywalk/features/routes/widgets/route_box.dart';
 import '../../routes/models/time_period.dart';
-
-class Review extends StatelessWidget{
-  //init
-  Review({this.image = "icons/no_pfp.png", this.review = 'review text goes here', this.stars = 0, super.key});
-  String image;
-  String review;
-  int stars;
-
-  @override
-  Widget build(BuildContext context)
-  {
-    List<Widget> starList = [];
-    int i = 0;
-    
-    //add as many full star icons as the stars var and then reach 5 with only outlines
-    for(i=0;i<stars;i++)
-    {
-      starList.add(Icon(Icons.star_rate_rounded, color: Colors.amberAccent));
-    }
-    for(i;i<5;i++)
-    {
-      starList.add(Icon(Icons.star_border_rounded, color: Colors.amberAccent));
-    }
-
-    return Container( //container for the background color
-      height: 50,
-      color: Color.fromARGB(255, 255, 242, 231),
-      child: Row( //row for image section and text section
-        children:[
-          Padding(padding: EdgeInsetsGeometry.all(5), child: Image(image: AssetImage(image))),
-          Align(//I think this align doesnt do shit but the point was to make the text not stick to the top (replace with padding or smth if not bored)
-            alignment: FractionalOffset(0.2, 0.2), 
-            child: Column( //column of text section
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(//stars
-                  children: starList, 
-                ),
-                SizedBox(
-                  width: 100,
-                  child: Text(review, overflow: TextOverflow.ellipsis) //review text
-                )
-              ],
-            )
-          )
-        ]
-      )
-    );
-  }
-}
+import '../widgets/reviewtile.dart';
+import '../models/review_model.dart';
+import '../../../common/widgets/primaryactionbutton.dart';
 
 
+// Your dummy data remains the same
+final List<Review> dummyReviews = [
+  Review(
+    id: '1',
+    userName: 'Marcus A.',
+    rating: 4.0,
+    text: 'what happens in the Roman Agora stays in the Roman Agora. Great tour!',
+  ),
+  Review(
+    id: '2',
+    userName: 'Cleopatra',
+    rating: 5.0,
+    text: 'Absolutely stunning views. The history really comes alive here.',
+  ),
+  Review(
+    id: '3',
+    userName: 'Julius C.',
+    rating: 3.0,
+    text: 'I came, I saw, I walked a lot. Good exercise but bring water.',
+  ),
+];
 
 class ReviewsScreen extends StatelessWidget {
   const ReviewsScreen({super.key});
@@ -62,114 +36,137 @@ class ReviewsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(left: 50, right: 50),
-      child: Column(//column for everything
-        children: [
-          Padding(//screen title
-            padding: EdgeInsets.all(8),
-            child: const Center(child: Text('REVIEWS')),
-          ),
-
-          Padding(//search bar
-            padding: EdgeInsets.only(top: 10,bottom: 50),
-            child: Container(//search bar background box
-              height: 30,
-              color: const Color.fromARGB(241, 238, 186, 97),
-              child: const Align(//align everything left
-                alignment: AlignmentGeometry.centerLeft, 
-                child: Row(//search bar contents
-                  children: [ 
-                    Padding(padding: EdgeInsetsGeometry.all(5)), //padding for spacing
-                    Icon(Icons.search, color: Colors.brown,),
-                    Text('Search for...', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                  ]
-                )
-              )
+    return Scaffold( // <--- Added Scaffold for proper structure
+      backgroundColor: const Color(0xFFF6E7D2), // Your background color
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 0), // Handled padding inside children usually, but 0 here to let headers touch edges
+        child: Column(
+          children: [
+            // Screen title
+            const Padding(
+              padding: EdgeInsets.only(top: 40, bottom: 8),
+              child: Center(child: Text('REVIEWS')),
             ),
-          ),
 
-          RouteBox( 
-                  title: "Echoes of Rome", 
-                  image: "icons/image.png", 
-                  timePeriod: TimePeriod(startYear: -10, endYear: 130), 
-                  duration: Duration(minutes: 45), 
-                  difficulty: "Cakewalk", 
-                  stops: ["Roman Agora","Hadrian's Library","Temple of Zeus"], 
-                  stars: 4, 
-                  reviewCount: reviews,
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+              child: Container(
+                height: 30,
+                color: const Color.fromARGB(241, 238, 186, 97),
+                child: const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      SizedBox(width: 5),
+                      Icon(Icons.search, color: Colors.brown),
+                      SizedBox(width: 5),
+                      Text('Search for...',
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
-                
-          Padding(//write a review
-            padding: EdgeInsets.only(top: 10,bottom: 50),
-            child: Container(//write a review background box
-              height: 30,
-              color: const Color.fromARGB(240, 238, 166, 41),
-              child: const Center(//write a review contents
-                child: Text('Write a Review', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              )
+              ),
             ),
-          ),
+            
+            // Route Box
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 50),
+              child: RouteBox(
+                title: "Echoes of Rome",
+                image: "icons/image.png",
+                timePeriod: TimePeriod(startYear: -10, endYear: 130),
+                duration: const Duration(minutes: 45),
+                difficulty: "Cakewalk",
+                stops: const ["Roman Agora", "Hadrian's Library", "Temple of Zeus"],
+                stars: 4,
+                reviewCount: reviews,
+              ),
+            ),
 
-          Align(//align just for text
-            alignment: Alignment.centerLeft,
-            child: Text('Photo Gallery (11)', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          ),
+            // Write a Review Button
+          PrimaryActionButton(
+            label: 'Write a Review',
+            onPressed:()=> print("Clicked Review 2"), 
+            backgroundcolour: Color(0xFFECAE35)
+            ),
 
-          Padding(padding: EdgeInsetsGeometry.all(5)),
-          
-          //hiorizontal images scroll
-          Container(//backround box for that^
-            height: 110,
-            width: 2000,
-            color: Colors.white,
-            child: Expanded(
-              child: ListView(//horizontal image list (doesnt scroll very well for me so try it out too and lmk what you think)
-                shrinkWrap: true,
+            // Gallery Header
+            const Padding(
+              padding: EdgeInsets.only(left: 50, bottom: 5),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Photo Gallery (11)',
+                    style: TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold)),
+              ),
+            ),
+
+            // Horizontal Images Scroll
+            // FIXED: Removed width: 2000 and Removed Expanded from inside Container
+            Container(
+              height: 110,
+              width: double.infinity, // <--- Allows container to fill screen width
+              color: Colors.white,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 50), // Match your page padding
                 scrollDirection: Axis.horizontal,
-                children: [
-                  Icon(Icons.image, size: 100,),
-                  Icon(Icons.image, size: 100,),
-                  Icon(Icons.image, size: 100,),
-                  Icon(Icons.image, size: 100,),
-                  Icon(Icons.image, size: 100,),
-                  Icon(Icons.image, size: 100,),
-                  Icon(Icons.image, size: 100,),
-                  Icon(Icons.image, size: 100,),
+                children: const [
+                  Icon(Icons.image, size: 100),
+                  Icon(Icons.image, size: 100),
+                  Icon(Icons.image, size: 100),
+                  Icon(Icons.image, size: 100),
+                  Icon(Icons.image, size: 100),
                 ],
-              )
+              ),
             ),
-          ),
-          Padding(padding: EdgeInsetsGeometry.all(10)),
 
-          //reviews header
-          Container(//header backrground
-                  height: 30,
-                  color: const Color.fromARGB(240, 238, 166, 41),
-                  child: const Align(
-                    alignment: AlignmentGeometry.centerLeft,
-                    child: Padding(
-                      padding: EdgeInsetsGeometry.directional(start: 10),
-                      child: Text('Reviews ($reviews)', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)), //header text
-                    )
-                  )
+            const SizedBox(height: 10),
+
+            // Reviews Header
+            Container(
+              height: 30,
+              margin: const EdgeInsets.symmetric(horizontal: 50),
+              color: const Color.fromARGB(240, 238, 166, 41),
+              child: const Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 10),
+                  child: Text('Reviews ($reviews)',
+                      style: TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.bold)),
                 ),
-          //reviews list
-          Expanded(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                Review(stars: 3, review: "what happens when ",),
-                Review(),
-                Review(),
-                Review(),
-                Review(),
-                Review(),
-              ],
-            )
-          ),
-        ],
-      )
+              ),
+            ),
+
+            // Reviews List
+            Expanded( // <--- This Expanded is correct (inside Column)
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 45), // Adjusted to align with header
+                child: ListView(
+                  padding: EdgeInsets.zero, // Remove top padding from list
+                  children: [
+                    // FIXED: Added onTap parameter to all ReviewTiles
+                    ReviewTile(
+                      review: dummyReviews[0],
+                      onTap: () => print("Clicked Review 1"), 
+                    ),
+                    ReviewTile(
+                      review: dummyReviews[1],
+                      onTap: () => print("Clicked Review 2"),
+                    ),
+                    ReviewTile(
+                      review: dummyReviews[2],
+                      onTap: () => print("Clicked Review 3"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
