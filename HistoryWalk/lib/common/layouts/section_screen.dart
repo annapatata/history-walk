@@ -13,37 +13,55 @@ class SectionScreenLayout extends StatelessWidget {
   final Widget body;
   final bool showSearch;
 
-  static const double horizontalPadding = 50;
+  double _horizontalPadding(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    if (width < 600) {
+      // Phone
+      return 16;
+    } else if (width < 1024) {
+      // Tablet
+      return 32;
+    } else {
+      // Web / Desktop
+      return 50;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
-      child: Column(
-        children: [
-          const SizedBox(height: 8),
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: _horizontalPadding(context),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 8),
 
-          // Title
-          Center(
-            child: Text(
+            // Title
+            Text(
               title,
-              style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                   ),
             ),
-          ),
 
-          // Search bar
-          if (showSearch)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: HWSearchBar(),
-            ),
+            // Search bar
+            if (showSearch) ...[
+              const SizedBox(height: 20),
+              const HWSearchBar(),
+            ],
 
-          // Screen-specific content
-          Expanded(child: body),
-        ],
+            const SizedBox(height: 16),
+
+            // Screen-specific content
+            Expanded(child: body),
+          ],
+        ),
       ),
     );
   }

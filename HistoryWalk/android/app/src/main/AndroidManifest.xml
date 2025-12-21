@@ -1,15 +1,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
-        android:label="testing_flutter"
+        android:label="historywalk"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data 
+        android:name="com.mapbox.token" 
+        android:value="pk.eyJ1IjoiZWwyMjAwNCIsImEiOiJjbWpmbHR4eWMwcHVlM2RzNndqdWhhZHV0In0.hnt0FsX_ThvFw-1mBf5-ag" />
+        
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
             <!-- Specifies an Android theme to apply to this Activity as soon as

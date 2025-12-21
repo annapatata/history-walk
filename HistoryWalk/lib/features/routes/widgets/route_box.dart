@@ -34,7 +34,8 @@ class RouteBox extends StatelessWidget {
     final stopText = stops.join(", ");
 
     // Dynamic sizes based on screen width
-    final imageWidth = screenWidth * 0.25; // wider on small screens
+    final imageWidth = screenWidth < 350 ? 80.0 : 100.0;
+    final imageHeight = screenWidth < 350 ? 80.0 : 100.0;
     final iconSize = screenWidth < 350 ? 14.0 : 16.0; // adapt icons for tiny screens
     final titleFontSize = screenWidth < 350 ? 14.0 : 16.0;
 
@@ -65,8 +66,8 @@ class RouteBox extends StatelessWidget {
               child: Image.asset(
                 image,
                 width: imageWidth,
-                height: 130,
-                fit: BoxFit.cover,
+                height: imageHeight,
+                fit: BoxFit.contain,
               ),
             ),
 

@@ -15,8 +15,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pushReplacement(
-        context,
+      Navigator.pushReplacement(context,
         MaterialPageRoute(builder: (_) => LoginScreen()),
       );
     });
@@ -27,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFEB35F),
       body: Center(
-        child: Image.asset( "assets/logos/history-walk-logo.png", width: 300,
+        child: Image.asset( "assets/logos/history-walk-logo.png", width: 280,
         ),
       ),
     );

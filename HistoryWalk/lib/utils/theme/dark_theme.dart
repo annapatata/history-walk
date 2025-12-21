@@ -3,6 +3,7 @@ import '../constants/app_colors.dart';
 import 'extensions/route_box_theme.dart';
 import 'extensions/searchbar_theme.dart';
 import 'extensions/reviewtile_theme.dart';
+import 'extensions/passport_theme.dart';
 
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
@@ -84,6 +85,13 @@ extensions: <ThemeExtension<dynamic>>[
     borderRadius: 20,
     elevation: 10,
     starColor: AppColors.stars,
+  ),
+  PassportTheme(
+    backgroundColor: AppColors.cardsDark,
+    textColor: AppColors.textDark,
+    iconColor: const Color(0xFFE5B132),
+    borderRadius: 12,
+    elevation: 10,
   ),
 ],
 );
