@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:historywalk/utils/theme/extensions/passport_theme.dart';
 
@@ -8,12 +9,16 @@ class PassportCard extends StatelessWidget {
     required this.nationality,
     required this.joinedDate,
     required this.level,
+    required this.avatarPath,
+    required this.onAvatarTap,
   });
 
   final String name;
   final String nationality;
   final String joinedDate;
   final String level;
+  final String avatarPath;
+  final VoidCallback onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +46,11 @@ class PassportCard extends StatelessWidget {
             nationality: nationality,
             joinedDate: joinedDate,
             level: level,
+            avatarPath: avatarPath,
+            onAvatarTap: onAvatarTap,
           ),
           const SizedBox(height: 16),
-          _BadgesSection(),
+          const _BadgesSection(),
           const SizedBox(height: 8),
         ],
       ),
@@ -57,12 +64,16 @@ class _TopSection extends StatelessWidget {
     required this.nationality,
     required this.joinedDate,
     required this.level,
+    required this.avatarPath,
+    required this.onAvatarTap,
   });
 
   final String name;
   final String nationality;
   final String joinedDate;
   final String level;
+  final String avatarPath;
+  final VoidCallback onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -72,20 +83,27 @@ class _TopSection extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Profile photo
-        Container(
-          width: 90,
-          height: 110,
-          decoration: BoxDecoration(
-            color: passTheme.iconColor,
-            borderRadius: BorderRadius.circular(12),
+        GestureDetector(
+          onTap: onAvatarTap,
+          child: Container(
+            width: 90,
+            height: 110,
+            decoration: BoxDecoration(
+              color: passTheme.iconColor,
+              borderRadius: BorderRadius.circular(12),
+              image: avatarPath.isNotEmpty
+                  ? DecorationImage(
+                      image: FileImage(File(avatarPath)),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: avatarPath.isEmpty
+                ? const Icon(Icons.person, size: 40)
+                : null,
           ),
-          child: const Icon(Icons.person, size: 40),
         ),
-
         const SizedBox(width: 16),
-
-        // Info + stamp
         Expanded(
           child: Stack(
             children: [
@@ -98,8 +116,6 @@ class _TopSection extends StatelessWidget {
                   _InfoLine(label: 'Level', value: level),
                 ],
               ),
-
-              // Stamp
               Positioned(
                 top: 0,
                 right: 0,
@@ -161,6 +177,8 @@ class _InfoLine extends StatelessWidget {
 }
 
 class _BadgesSection extends StatelessWidget {
+  const _BadgesSection();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

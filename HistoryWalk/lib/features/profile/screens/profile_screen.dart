@@ -32,9 +32,36 @@ class ProfileScreen extends StatelessWidget {
                 joinedDate: DateFormat('dd/MM/yyyy')
                     .format(controller.userProfile.value.firstLoginDate),
                 level: 'Explorer',
-              ),
+                avatarPath: controller.userProfile.value.avatarPath,
+                onAvatarTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (_) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.photo),
+                          title: const Text('Gallery'),
+                          onTap: () {
+                            controller.pickAvatarFromGallery();
+                            Navigator.pop(context);
+                          },
+                        ),
+                        ListTile(
+                        leading: const Icon(Icons.camera_alt),
+                        title: const Text('Camera'),
+                        onTap: () {
+                          controller.pickAvatarFromCamera();
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
+        ),
           const SizedBox(height: 12),
           ProfileProgressBar(
             progress: 59, // STUB

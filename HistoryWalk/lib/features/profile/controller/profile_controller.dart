@@ -1,24 +1,47 @@
 import 'package:get/get.dart';
 import '../models/user_profile.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileController extends GetxController {
-  /// Observable user profile
+  final ImagePicker _picker = ImagePicker();
+
   late Rx<UserProfile> userProfile;
 
   @override
   void onInit() {
     super.onInit();
 
-    /// Mock initial data
     userProfile = UserProfile(
       name: 'Guest',
       nationality: 'Unknown',
-      avatarPath: 'assets/avatars/default.png', // STUB
+      avatarPath: '',
       firstLoginDate: DateTime.now(),
-      level: 1, // STUB
-      progress: 0, // STUB
+      level: 1,
+      progress: 0,
     ).obs;
   }
+
+  Future<void> pickAvatarFromGallery() async {
+    final XFile? image =
+        await _picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      userProfile.value =
+          userProfile.value.copyWith(avatarPath: image.path);
+    }
+  }
+
+  Future<void> pickAvatarFromCamera() async {
+    final XFile? image =
+        await _picker.pickImage(source: ImageSource.camera);
+
+    if (image != null) {
+      userProfile.value =
+          userProfile.value.copyWith(avatarPath: image.path);
+    }
+  }
+
 
   // =========================
   // User editable fields
