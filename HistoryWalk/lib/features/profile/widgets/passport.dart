@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:historywalk/utils/theme/extensions/passport_theme.dart';
 
-
 class PassportCard extends StatelessWidget {
-  const PassportCard({super.key});
+  const PassportCard({
+    super.key,
+    required this.name,
+    required this.nationality,
+    required this.joinedDate,
+    required this.level,
+  });
+
+  final String name;
+  final String nationality;
+  final String joinedDate;
+  final String level;
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +36,15 @@ class PassportCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _TopSection(),
+          _TopSection(
+            name: name,
+            nationality: nationality,
+            joinedDate: joinedDate,
+            level: level,
+          ),
           const SizedBox(height: 16),
           _BadgesSection(),
-          const SizedBox(height:8),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -37,6 +52,18 @@ class PassportCard extends StatelessWidget {
 }
 
 class _TopSection extends StatelessWidget {
+  const _TopSection({
+    required this.name,
+    required this.nationality,
+    required this.joinedDate,
+    required this.level,
+  });
+
+  final String name;
+  final String nationality;
+  final String joinedDate;
+  final String level;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -64,11 +91,11 @@ class _TopSection extends StatelessWidget {
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  _InfoLine(label: 'Name', value: 'Anna'),
-                  _InfoLine(label: 'Nationality', value: 'Greek'),
-                  _InfoLine(label: 'Joined', value: '00/00/0000'),
-                  _InfoLine(label: 'Level', value: 'Explorer'),
+                children: [
+                  _InfoLine(label: 'Name', value: name),
+                  _InfoLine(label: 'Nationality', value: nationality),
+                  _InfoLine(label: 'Joined', value: joinedDate),
+                  _InfoLine(label: 'Level', value: level),
                 ],
               ),
 
@@ -133,9 +160,7 @@ class _InfoLine extends StatelessWidget {
   }
 }
 
-
 class _BadgesSection extends StatelessWidget {
-  
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -159,4 +184,3 @@ class _BadgesSection extends StatelessWidget {
     );
   }
 }
-
