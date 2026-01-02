@@ -92,11 +92,13 @@ class _TopSection extends StatelessWidget {
               color: passTheme.iconColor,
               borderRadius: BorderRadius.circular(12),
               image: avatarPath.isNotEmpty
-                  ? DecorationImage(
-                      image: FileImage(File(avatarPath)),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
+                ? DecorationImage(
+                    image: avatarPath.startsWith('assets/')
+                        ? AssetImage(avatarPath)
+                        : FileImage(File(avatarPath)) as ImageProvider,
+                    fit: BoxFit.cover,
+                  )
+                : null,
             ),
             child: avatarPath.isEmpty
                 ? const Icon(Icons.person, size: 40)
