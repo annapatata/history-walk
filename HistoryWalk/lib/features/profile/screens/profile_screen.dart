@@ -6,6 +6,7 @@ import '../controller/profile_controller.dart';
 import '../widgets/passport.dart';
 import '../widgets/progressbar.dart';
 import 'package:historywalk/common/layouts/section_screen.dart';
+import '../widgets/badges_sheet.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
@@ -26,16 +27,23 @@ class ProfileScreen extends StatelessWidget {
                 _showEditProfileDialog(context);
               },
               child: PassportCard(
-                name: controller.userProfile.value.name,
-                nationality: controller.userProfile.value.nationality,
-                joinedDate: DateFormat('dd/MM/yyyy')
-                    .format(controller.userProfile.value.firstLoginDate),
-                level: controller.levelTitle,
-                avatarPath: controller.userProfile.value.avatarPath,
-                onAvatarTap: () {
-                  _showAvatarOptions(context);
-                },
-              ),
+                        name: controller.userProfile.value.name,
+                        nationality: controller.userProfile.value.nationality,
+                        joinedDate: DateFormat('dd/MM/yyyy')
+                            .format(controller.userProfile.value.firstLoginDate),
+                        level: controller.levelTitle,
+                        avatarPath: controller.userProfile.value.avatarPath,
+                        onAvatarTap: () {
+                          _showAvatarOptions(context);
+                        },
+                        onBadgesTap: () {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (_) => const BadgesSheet(),
+                          );
+                        },
+                      ),
             ),
             const SizedBox(height: 12),
 

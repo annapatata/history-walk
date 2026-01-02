@@ -11,6 +11,7 @@ class PassportCard extends StatelessWidget {
     required this.level,
     required this.avatarPath,
     required this.onAvatarTap,
+    required this.onBadgesTap,
   });
 
   final String name;
@@ -19,6 +20,7 @@ class PassportCard extends StatelessWidget {
   final String level;
   final String avatarPath;
   final VoidCallback onAvatarTap;
+  final VoidCallback onBadgesTap;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +52,7 @@ class PassportCard extends StatelessWidget {
             onAvatarTap: onAvatarTap,
           ),
           const SizedBox(height: 16),
-          const _BadgesSection(),
+          _BadgesSection(onTap: onBadgesTap),
           const SizedBox(height: 8),
         ],
       ),
@@ -92,13 +94,13 @@ class _TopSection extends StatelessWidget {
               color: passTheme.iconColor,
               borderRadius: BorderRadius.circular(12),
               image: avatarPath.isNotEmpty
-                ? DecorationImage(
-                    image: avatarPath.startsWith('assets/')
-                        ? AssetImage(avatarPath)
-                        : FileImage(File(avatarPath)) as ImageProvider,
-                    fit: BoxFit.cover,
-                  )
-                : null,
+                  ? DecorationImage(
+                      image: avatarPath.startsWith('assets/')
+                          ? AssetImage(avatarPath)
+                          : FileImage(File(avatarPath)) as ImageProvider,
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
             child: avatarPath.isEmpty
                 ? const Icon(Icons.person, size: 40)
@@ -179,26 +181,31 @@ class _InfoLine extends StatelessWidget {
 }
 
 class _BadgesSection extends StatelessWidget {
-  const _BadgesSection();
+  const _BadgesSection({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final passTheme = theme.extension<PassportTheme>()!;
 
-    return Container(
-      height: 36,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: passTheme.iconColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        'BADGES',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 36,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: passTheme.iconColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.center,
+        child: const Text(
+          'BADGES',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
         ),
       ),
     );
