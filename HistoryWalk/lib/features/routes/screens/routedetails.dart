@@ -1,15 +1,13 @@
-// Reviews_screen.dart
 import 'package:flutter/material.dart';
 import 'package:historywalk/common/layouts/section_screen.dart';
 import '../../routes/models/route_model.dart';
-import '../widgets/reviewtile.dart';
-import '../models/review_model.dart';
+import '../../reviews/widgets/reviewtile.dart';
+import '../../reviews/models/review_model.dart';
 import '../../../common/widgets/primaryactionbutton.dart';
 import '../../../common/widgets/photo_gallery.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
-import '../widgets/writereview.dart';
+import '../../reviews/widgets/writereview.dart';
 
-// Your dummy data remains the same
 final List<Review> dummyReviews = [
   Review(
     id: '1',
@@ -29,10 +27,22 @@ final List<Review> dummyReviews = [
     rating: 3.0,
     text: 'I came, I saw, I walked a lot. Good exercise but bring water.',
   ),
+  Review(
+    id: '4',
+    userName: 'Julius Caa.',
+    rating: 3.0,
+    text: 'I came.',
+  ),
+  Review(
+    id: '5',
+    userName: 'Julius Coo.',
+    rating: 3.0,
+    text: 'I came, I saw.',
+  ),
 ];
 
-class ReviewsScreen extends StatelessWidget {
-  const ReviewsScreen({
+class RouteDetails extends StatelessWidget {
+  const RouteDetails({
     required this.route,
     super.key
   });
@@ -45,26 +55,61 @@ class ReviewsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SectionScreenLayout(
-        title: 'REVIEWS',
+        title: route.name,
+        showSearch: false,
         body: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // Route description message at top
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Text(
-                route.description,
-                style: Theme.of(context).textTheme.bodyMedium,
+            // Route description with character on left and speech bubble on right
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Character Image on the left
+                  Image.asset(
+                    'assets/images/milowave.png',
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.contain,
+                  ),
+                  // Text Bubble on the right
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 0),
+                      padding: const EdgeInsets.all(48),
+                      decoration: BoxDecoration(
+                        color: AppColors.searchBarDark,
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(40),
+                          bottomRight: Radius.circular(40),
+                          topLeft: Radius.circular(40),
+                          bottomLeft: Radius.circular(4), // Sharp corner for bubble tail effect
+                        ),
+                        border: Border.all(color: AppColors.searchBarLight, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        route.description,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.white,
+                              height: 1.4,
+                            ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 12),
+
+            const SizedBox(height: 20),
 
             // Write a Review button - only show if user completed the route
             if (route.isCompleted)
@@ -130,7 +175,7 @@ class ReviewsScreen extends StatelessWidget {
                   //   builder: (context) => MapScreen(route: route),
                   // ));
                 },
-                backgroundcolour: AppColors.stars,
+                backgroundcolour: AppColors.searchBarDark,
               ),
             ),
 

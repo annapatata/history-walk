@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../features/routes/screens/routes_screen.dart';
 import '../features/map/screens/map_screen.dart';
-import '../features/reviews/screens/reviews_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 
 
@@ -19,8 +18,6 @@ class _NavigationMenuState extends State<NavigationMenu> {
   final List<Widget> screens =  [
     RoutesScreen(),
     MapScreen(),
-    ReviewsScreen(imageUrls: [
-      ],),
     ProfileScreen(),
   ];
 
@@ -39,7 +36,6 @@ class _NavigationMenuState extends State<NavigationMenu> {
         destinations: const[
           NavigationDestination(icon: Icon(Icons.route), label: "Routes"),
           NavigationDestination(icon: Icon(Icons.map), label: "Map"),
-          NavigationDestination(icon: Icon(Icons.reviews), label: "Reviews"),
           NavigationDestination(icon: Icon(Icons.person), label: "Profile"),
         ],
         ),

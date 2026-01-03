@@ -1,46 +1,31 @@
 import 'package:flutter/material.dart';
-import '../models/time_period.dart';
 import '../../../utils/formatters/years.dart';
 import 'package:historywalk/utils/theme/extensions/route_box_theme.dart';
+import '../models/route_model.dart';
 
 class RouteBox extends StatelessWidget {
-  const RouteBox({
-    required this.title,
-    required this.image,
-    required this.timePeriod,
-    required this.duration,
-    required this.difficulty,
-    required this.stops,
-    required this.stars,
-    required this.reviewCount,
-    super.key,
-  });
-
-  final String title;
-  final String image;
-  final TimePeriod timePeriod;
-  final Duration duration;
-  final String difficulty;
-  final List<String> stops;
-  final int stars;
-  final int reviewCount;
+  final RouteModel route;
+  final VoidCallback? onTap;
+  const RouteBox({super.key, required this.route, this.onTap});
 
   @override
   Widget build(BuildContext context) {
+
     final screenWidth = MediaQuery.of(context).size.width;
     final theme = Theme.of(context);
     final boxTheme = theme.extension<RouteBoxTheme>()!;
 
-    final stopText = stops.join(", ");
+    final stopText = route.stops.join(", ");
 
     // Dynamic sizes based on screen width
     final imageWidth = screenWidth < 350 ? 80.0 : 100.0;
     final imageHeight = screenWidth < 350 ? 80.0 : 100.0;
     final iconSize = screenWidth < 350 ? 14.0 : 16.0; // adapt icons for tiny screens
     final titleFontSize = screenWidth < 350 ? 14.0 : 16.0;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 20),
       child: Container(
         constraints: const BoxConstraints(minHeight: 130),
         decoration: BoxDecoration(
@@ -64,7 +49,7 @@ class RouteBox extends StatelessWidget {
                 bottomLeft: Radius.circular(boxTheme.borderRadius),
               ),
               child: Image.asset(
-                image,
+                route.routepic,
                 width: imageWidth,
                 height: imageHeight,
                 fit: BoxFit.contain,
@@ -81,7 +66,7 @@ class RouteBox extends StatelessWidget {
                   children: [
                     // TITLE
                     Text(
-                      title,
+                      route.name,
                       style: TextStyle(
                         color: boxTheme.textColor,
                         fontWeight: FontWeight.bold,
@@ -97,23 +82,32 @@ class RouteBox extends StatelessWidget {
                     Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        ...List.generate(
-                          stars,
-                          (i) => Icon(Icons.star,
-                              color: boxTheme.starColor, size: iconSize),
-                        ),
-                        ...List.generate(
-                          5 - stars,
-                          (i) => Icon(Icons.star_border,
-                              color: boxTheme.starColor, size: iconSize),
-                        ),
-                        Text(
-                          "  ($stars/5 · $reviewCount reviews)",
-                          style: TextStyle(
-                            color: boxTheme.textColor,
-                            fontSize: 12,
-                          ),
-                        ),
+                        Builder(builder: (_) {
+                          final stars = route.rating.clamp(0, 5).round();
+                          final reviewCount = route.reviewCount;
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ...List.generate(
+                                stars,
+                                (i) => Icon(Icons.star,
+                                    color: boxTheme.starColor, size: iconSize),
+                              ),
+                              ...List.generate(
+                                5 - stars,
+                                (i) => Icon(Icons.star_border,
+                                    color: boxTheme.starColor, size: iconSize),
+                              ),
+                              Text(
+                                "  ($stars/5 · $reviewCount reviews)",
+                                style: TextStyle(
+                                  color: boxTheme.textColor,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
                       ],
                     ),
 
@@ -141,7 +135,9 @@ class RouteBox extends StatelessWidget {
                                 size: iconSize, color: boxTheme.iconColor),
                             const SizedBox(width: 4),
                             Text(
-                              formatPeriod(timePeriod),
+                              route.timePeriods.isNotEmpty
+                                  ? formatPeriod(route.timePeriods.first)
+                                  : 'Unknown',
                               style: TextStyle(
                                   color: boxTheme.textColor, fontSize: 12),
                               overflow: TextOverflow.ellipsis,
@@ -156,7 +152,7 @@ class RouteBox extends StatelessWidget {
                                 size: iconSize, color: boxTheme.iconColor),
                             const SizedBox(width: 4),
                             Text(
-                              "${duration.inMinutes} min",
+                              "${route.duration.inMinutes} min",
                               style: TextStyle(
                                   color: boxTheme.textColor, fontSize: 12),
                             ),
@@ -170,7 +166,7 @@ class RouteBox extends StatelessWidget {
                                 size: iconSize, color: boxTheme.iconColor),
                             const SizedBox(width: 4),
                             Text(
-                              difficulty,
+                              route.difficulty,
                               style: TextStyle(
                                   color: boxTheme.textColor, fontSize: 12),
                               overflow: TextOverflow.ellipsis,
@@ -186,6 +182,7 @@ class RouteBox extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }
