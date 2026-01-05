@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:historywalk/utils/theme/extensions/reviewtile_theme.dart';
 import '../models/review_model.dart';
+import 'reviewdetails.dart';
 
 class ReviewTile extends StatelessWidget {
   final Review review; // Assuming you have a model class
@@ -18,7 +19,14 @@ class ReviewTile extends StatelessWidget {
     final tileTheme = theme.extension<ReviewTileTheme>()!;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return ReviewDetails(review: review);
+          },
+        );
+      },
       child: Container(
         // 1. Add padding so the text doesn't sit right on the line
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
 import 'package:historywalk/common/widgets/primaryactionbutton.dart';
+import 'package:image_picker/image_picker.dart';
 import 'starrating.dart';
 
 class WriteReviewModal extends StatefulWidget {

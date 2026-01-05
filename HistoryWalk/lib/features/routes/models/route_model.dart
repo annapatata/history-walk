@@ -4,7 +4,7 @@ class RouteModel {
   final String id;
   final String name;
   final String description;
-  final List<String> imageUrl;
+  final List<String> imageUrl; //current unused because we use the images in the reviews for the gallery
   final String routepic;
   final List<TimePeriod> timePeriods;
   final Duration duration;
@@ -26,6 +26,6 @@ class RouteModel {
     required this.rating,
     required this.reviewCount,
     required this.routepic,
-    this.isCompleted = false,
+    this.isCompleted = false
   });
 }

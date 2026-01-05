@@ -3,6 +3,7 @@ class Review {
   final String userName;    // Name of the reviewer
   final double rating;      // 1.0 to 5.0
   final String text;        // The actual review content
+  final List<String>? images; // Optional: list of image URLs
   //final String? avatarUrl;  // Optional: URL if you have images later
 
   // Constructor
@@ -11,6 +12,7 @@ class Review {
     required this.userName,
     required this.rating,
     required this.text,
+    this.images,
     //this.avatarUrl,
   });
 }

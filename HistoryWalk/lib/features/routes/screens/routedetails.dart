@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:historywalk/common/layouts/section_screen.dart';
 import '../../routes/models/route_model.dart';
 import '../../reviews/widgets/reviewtile.dart';
+import '../../reviews/widgets/reviewdetails.dart';
 import '../../reviews/models/review_model.dart';
 import '../../../common/widgets/primaryactionbutton.dart';
 import '../../../common/widgets/photo_gallery.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
 import '../../reviews/widgets/writereview.dart';
+import 'reviews_screen.dart';
 
 final List<Review> dummyReviews = [
   Review(
@@ -32,24 +34,31 @@ final List<Review> dummyReviews = [
     userName: 'Julius Caa.',
     rating: 3.0,
     text: 'I came.',
+    images: ['https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg']
   ),
   Review(
     id: '5',
     userName: 'Julius Coo.',
     rating: 3.0,
     text: 'I came, I saw.',
+    images: ['https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg', 'https://www.shutterstock.com/shutterstock/photos/2286554497/display_1500/stock-photo-random-pictures-cute-and-funny-2286554497.jpg', 'https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg', 'https://www.shutterstock.com/shutterstock/photos/2286554497/display_1500/stock-photo-random-pictures-cute-and-funny-2286554497.jpg']
   ),
 ];
 
 class RouteDetails extends StatelessWidget {
-  const RouteDetails({
+  RouteDetails({
     required this.route,
     super.key
   });
 
-  static const int reviews = 255;
+  static int reviews = dummyReviews.length;
 
   final RouteModel route;
+
+  final allImages = dummyReviews
+    .where((review) => review.images != null && review.images!.isNotEmpty)
+    .expand((review) => review.images!)
+    .toList();
 
   @override
   Widget build(BuildContext context) {
@@ -135,16 +144,35 @@ class RouteDetails extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            PhotoGallery(
-              imageUrls: route.imageUrl,
-            ),
+            if (allImages.isNotEmpty) ...[
+              SizedBox(
+                height: 110,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: allImages.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        allImages[index],
+                        fit: BoxFit.cover,
+                        width: 110,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
 
             const SizedBox(height: 16),
 
             Container(
               height: 30,
               color: AppColors.stars,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.only(left: 10),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -161,6 +189,19 @@ class RouteDetails extends StatelessWidget {
             ReviewTile(review: dummyReviews[0], onTap: () {}),
             ReviewTile(review: dummyReviews[1], onTap: () {}),
             ReviewTile(review: dummyReviews[2], onTap: () {}),
+
+            if(dummyReviews.length > 3)
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ReviewsScreen(),
+                    ),
+                  );
+                },
+                child: const Text('See All Reviews'),
+              ),
 
             const SizedBox(height: 20),
 
