@@ -5,20 +5,20 @@ import 'package:historywalk/navigation_menu.dart';
 import 'package:historywalk/common/styles/spacing_styles.dart';
 import 'package:historywalk/utils/constants/text_strings.dart';
 import 'package:historywalk/utils/constants/sizes.dart';
-import 'package:historywalk/features/auth/screens/register/register_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final AuthController authController = Get.find<AuthController>();
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -26,13 +26,19 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _login() async {
+  void _register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    await authController.login(
+    if (passwordController.text.trim() != confirmPasswordController.text.trim()) {
+      Get.snackbar("Error", "Passwords do not match");
+      return;
+    }
+
+    await authController.register(
       emailController.text.trim(),
       passwordController.text.trim(),
     );
@@ -47,9 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               // Title
-              Text(AppTexts.loginTitle,
+              Text(AppTexts.registerTitle,
                   style: Theme.of(context).textTheme.headlineMedium),
-              
+
               const SizedBox(height: AppSizes.spaceBtwSections / 2),
 
               // Form
@@ -65,12 +71,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: "Email",
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Email is required";
-                        }
-                        if (!GetUtils.isEmail(value)) {
-                          return "Enter a valid email";
-                        }
+                        if (value == null || value.isEmpty) return "Email is required";
+                        if (!GetUtils.isEmail(value)) return "Enter a valid email";
                         return null;
                       },
                     ),
@@ -86,53 +88,48 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       obscureText: true,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Password is required";
-                        }
-                        if (value.length < 6) {
-                          return "Password must be at least 6 characters";
-                        }
+                        if (value == null || value.isEmpty) return "Password is required";
+                        if (value.length < 6) return "Password must be at least 6 characters";
                         return null;
                       },
                     ),
-                    const SizedBox(height: AppSizes.spaceBtwItems / 2),
+                    const SizedBox(height: AppSizes.spaceBtwItems),
 
-                    // Remember Me & Forget Password
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Checkbox(value: true, onChanged: (value) {}),
-                            const Text("Remember Me"),
-                          ],
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text("Forget Password?"),
-                        ),
-                      ],
+                    // Confirm Password
+                    TextFormField(
+                      controller: confirmPasswordController,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.password_outlined),
+                        labelText: "Confirm Password",
+                        suffixIcon: Icon(Icons.remove_red_eye_rounded),
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return "Confirm password is required";
+                        return null;
+                      },
                     ),
+
                     const SizedBox(height: AppSizes.spaceBtwSections),
 
-                    // Login Button
+                    // Register Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _login,
-                        child: const Text("Let's Go!"),
+                        onPressed: _register,
+                        child: const Text("Register"),
                       ),
                     ),
 
                     const SizedBox(height: AppSizes.spaceBtwSections / 2),
 
-                    // Register link
+                    // Login link
                     TextButton(
                       onPressed: () {
-                        Get.to(() => const RegisterScreen());
+                        Get.back(); // πίσω στο login screen
                       },
-                      child: const Text("Don't have an account? Register"),
-                    )
+                      child: const Text("Already have an account? Login"),
+                    ),
                   ],
                 ),
               ),

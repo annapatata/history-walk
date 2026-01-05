@@ -1,5 +1,7 @@
 class AppTexts {
 
+  static const String registerTitle = "Register";
+
   static const String flashScreen = "Wander through time , one step at a time";
   static const String signUpTitle = "Let's get to know each other!";
   static const String loginTitle = "Welcome back!";
