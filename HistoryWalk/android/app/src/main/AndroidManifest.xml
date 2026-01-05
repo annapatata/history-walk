@@ -10,10 +10,7 @@
         android:label="historywalk"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <meta-data 
-        android:name="com.mapbox.token" 
-        android:value="pk.eyJ1IjoiZWwyMjAwNCIsImEiOiJjbWpmbHR4eWMwcHVlM2RzNndqdWhhZHV0In0.hnt0FsX_ThvFw-1mBf5-ag" />
-        
+ 
         <activity
             android:name=".MainActivity"
             android:exported="true"
