@@ -7,6 +7,7 @@ import '../widgets/passport.dart';
 import '../widgets/progressbar.dart';
 import 'package:historywalk/common/layouts/section_screen.dart';
 import '../widgets/badges_sheet.dart';
+import '../../auth/screens/login/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
@@ -20,50 +21,81 @@ class ProfileScreen extends StatelessWidget {
       showSearch: false,
       body: Obx(
         () => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            GestureDetector(
-              onTap: () {
-                _showEditProfileDialog(context);
-              },
-              child: PassportCard(
-                        name: controller.userProfile.value.name,
-                        nationality: controller.userProfile.value.nationality,
-                        joinedDate: DateFormat('dd/MM/yyyy')
-                            .format(controller.userProfile.value.firstLoginDate),
-                        level: controller.levelTitle,
-                        avatarPath: controller.userProfile.value.avatarPath,
-                        onAvatarTap: () {
-                          _showAvatarOptions(context);
-                        },
-                        onBadgesTap: () {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: true,
-                            builder: (_) => const BadgesSheet(),
-                          );
-                        },
-                      ),
-            ),
-            const SizedBox(height: 12),
-
-            ProfileProgressBar(
-              progress: controller.userProfile.value.progress.toDouble(),
-              label: 'Exploring Athens',
-              icon: const Icon(Icons.account_balance, size: 20),
-            ),
-
-            const SizedBox(height: 16),
-
-            // // 🧪 TEMP BUTTON — για testing progress
-            // ElevatedButton(
-            //   onPressed: () {
-            //     controller.addProgress(-10);
-            //   },
-            //   child: const Text('+10 Progress (TEST)'),
-            // ),
-          ],
+  padding: const EdgeInsets.all(16),
+  children: [
+    // 1. PASSPORT CARD WITH PENCIL OVERLAY
+    Stack(
+      children: [
+        // Your existing card logic
+        PassportCard(
+          name: controller.userProfile.value.name,
+          nationality: controller.userProfile.value.nationality,
+          joinedDate: DateFormat('dd/MM/yyyy')
+              .format(controller.userProfile.value.firstLoginDate),
+          level: controller.levelTitle,
+          avatarPath: controller.userProfile.value.avatarPath,
+          onAvatarTap: () => _showAvatarOptions(context),
+          onBadgesTap: () {
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (_) => const BadgesSheet(),
+            );
+          },
         ),
+        
+        // The Pencil Icon positioned top-right
+        Positioned(
+          top: 8,
+          right: 8,
+          child: CircleAvatar(
+            backgroundColor: Colors.white.withOpacity(0.8),
+            radius: 18,
+            child: IconButton(
+              icon: const Icon(Icons.edit, size: 18, color: Colors.black),
+              onPressed: () => _showEditProfileDialog(context),
+            ),
+          ),
+        ),
+      ],
+    ),
+    
+    const SizedBox(height: 12),
+
+    ProfileProgressBar(
+      progress: controller.userProfile.value.progress.toDouble(),
+      label: 'Exploring Athens',
+      icon: const Icon(Icons.account_balance, size: 20),
+    ),
+
+    const SizedBox(height: 32), // More spacing before logout
+
+    // 2. LOGOUT BUTTON
+    const Divider(),
+    ListTile(
+      onTap: () {
+        // Add your logout logic here, e.g.:
+        // controller.logout(); 
+        Get.defaultDialog(
+          title: "Logout",
+          middleText: "Are you sure you want to log out?",
+          textConfirm: "Yes",
+          textCancel: "No",
+          confirmTextColor: Colors.white,
+          onConfirm: () {
+             // This clears the navigation stack so they can't go back
+              Get.offAll(() => LoginScreen());
+          },
+        );
+      },
+      leading: const Icon(Icons.logout, color: Colors.red),
+      title: const Text(
+        'Log Out',
+        style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+      ),
+    ),
+  ],
+),
       ),
     );
   }

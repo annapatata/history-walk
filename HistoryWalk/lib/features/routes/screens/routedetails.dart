@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:historywalk/common/layouts/section_screen.dart';
 import '../../routes/models/route_model.dart';
 import '../../reviews/widgets/reviewtile.dart';
-import '../../reviews/widgets/reviewdetails.dart';
 import '../../reviews/models/review_model.dart';
 import '../../../common/widgets/primaryactionbutton.dart';
-import '../../../common/widgets/photo_gallery.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
 import '../../reviews/widgets/writereview.dart';
 import 'reviews_screen.dart';
@@ -63,167 +61,174 @@ class RouteDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SectionScreenLayout(
-        title: route.name,
-        showSearch: false,
-        body: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            // Route description with character on left and speech bubble on right
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Character Image on the left
-                  Image.asset(
-                    'assets/images/milowave.png',
-                    width: 150,
-                    height: 150,
-                    fit: BoxFit.contain,
-                  ),
-                  // Text Bubble on the right
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.only(left: 0),
-                      padding: const EdgeInsets.all(48),
-                      decoration: BoxDecoration(
-                        color: AppColors.searchBarDark,
-                        borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(40),
-                          bottomRight: Radius.circular(40),
-                          topLeft: Radius.circular(40),
-                          bottomLeft: Radius.circular(4), // Sharp corner for bubble tail effect
-                        ),
-                        border: Border.all(color: AppColors.searchBarLight, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        route.description,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                              height: 1.4,
-                            ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-
-            const SizedBox(height: 20),
-
-            // Write a Review button - only show if user completed the route
-            if (route.isCompleted)
-              PrimaryActionButton(
-                label: 'Write a Review',
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return const WriteReviewModal();
-                    },
-                  );
-                },
-                backgroundcolour: AppColors.stars,
-              ),
-
-            const SizedBox(height: 16),
-
-            Text(
-              'Photo Gallery (${route.imageUrl.length})',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 8),
-
-            if (allImages.isNotEmpty) ...[
-              SizedBox(
-                height: 110,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: allImages.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        allImages[index],
-                        fit: BoxFit.cover,
-                        width: 110,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-
-
-            const SizedBox(height: 16),
-
-            Container(
-              height: 30,
-              color: AppColors.stars,
-              child: Padding(
-                padding: EdgeInsets.only(left: 10),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Reviews ($reviews)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            ReviewTile(review: dummyReviews[0], onTap: () {}),
-            ReviewTile(review: dummyReviews[1], onTap: () {}),
-            ReviewTile(review: dummyReviews[2], onTap: () {}),
-
-            if(dummyReviews.length > 3)
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ReviewsScreen(),
-                    ),
-                  );
-                },
-                child: const Text('See All Reviews'),
-              ),
-
-            const SizedBox(height: 20),
-
-            // START ROUTE button at bottom
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: PrimaryActionButton(
-                label: 'START ROUTE',
-                onPressed: () {
-                  // TODO: Navigate to map screen
-                  // Navigator.of(context).push(MaterialPageRoute(
-                  //   builder: (context) => MapScreen(route: route),
-                  // ));
-                },
-                backgroundcolour: AppColors.searchBarDark,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-          ],
-        ),
+      bottomNavigationBar: Container(
+      padding: const EdgeInsets.all(16.0),
+      color: Colors.transparent, // Or your background color
+      child: PrimaryActionButton(
+        label: 'START ROUTE',
+        onPressed: () {
+          // TODO: Navigate to map screen
+        },
+        backgroundcolour: AppColors.searchBarDark,
       ),
-    );
+    ),
+
+      body: Stack (
+        children: [
+          SectionScreenLayout(
+            title: route.name,
+            showSearch: false,
+            body: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // Route description with character on left and speech bubble on right
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Character Image on the left
+                      Image.asset(
+                        'assets/images/milowave.png',
+                        width: 150,
+                        height: 150,
+                        fit: BoxFit.contain,
+                      ),
+                      // Text Bubble on the right
+                      Expanded(
+                        child: Container(
+                          margin: const EdgeInsets.only(left: 0),
+                          padding: const EdgeInsets.all(48),
+                          decoration: BoxDecoration(
+                            color: AppColors.searchBarDark,
+                            borderRadius: const BorderRadius.only(
+                              topRight: Radius.circular(40),
+                              bottomRight: Radius.circular(40),
+                              topLeft: Radius.circular(40),
+                              bottomLeft: Radius.circular(4), // Sharp corner for bubble tail effect
+                            ),
+                            border: Border.all(color: AppColors.searchBarLight, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            route.description,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white,
+                                  height: 1.4,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Write a Review button - only show if user completed the route
+                if (route.isCompleted)
+                  PrimaryActionButton(
+                    label: 'Write a Review',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const WriteReviewModal();
+                        },
+                      );
+                    },
+                    backgroundcolour: AppColors.stars,
+                  ),
+
+                const SizedBox(height: 16),
+
+                Text(
+                  'Photo Gallery (${route.imageUrl.length})',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 8),
+
+                if (allImages.isNotEmpty) ...[
+                  SizedBox(
+                    height: 110,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: allImages.length,
+                      separatorBuilder: (context, index) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            allImages[index],
+                            fit: BoxFit.cover,
+                            width: 110,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                const SizedBox(height: 16),
+
+                Container(
+                  height: 30,
+                  color: AppColors.stars,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Reviews ($reviews)',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                ReviewTile(review: dummyReviews[0], onTap: () {}),
+                ReviewTile(review: dummyReviews[1], onTap: () {}),
+                ReviewTile(review: dummyReviews[2], onTap: () {}),
+
+                if(dummyReviews.length > 3)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ReviewsScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('See All Reviews'),
+                  ),
+
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+          
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 10,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        ],
+      )
+      );
   }
 }

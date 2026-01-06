@@ -5,6 +5,8 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'; // For the MapWid
 import 'package:flutter/services.dart'; // If loading custom map styles or icons from assets
 import 'dart:typed_data';               // If processing image data for custom markers
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:get/get.dart';
+import '../controller/map_controller.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -12,7 +14,9 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  final MapController controller = Get.put(MapController());
   MapboxMap? mapboxMap;
+  PointAnnotationManager? pointAnnotationManager;
 
   // 1. Function to find and move to user location
   Future<void> _goToUserLocation() async {
@@ -37,6 +41,7 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,7 +50,27 @@ class _MapScreenState extends State<MapScreen> {
         children: [
 
           MapWidget(
-            onMapCreated: (controller) => mapboxMap = controller,
+            onMapCreated: (MapboxMap map) async {
+  mapboxMap = map;
+
+  // 1. Load the image bytes from assets
+  final ByteData bytes = await rootBundle.load('assets/images/marker.png');
+  final Uint8List list = bytes.buffer.asUint8List();
+
+  // 2. Create the manager (this stays the same)
+  pointAnnotationManager = await map.annotations.createPointAnnotationManager();
+
+  // 3. Create your markers
+  // Notice we use the 'image' property directly!
+  final options = controller.stops.map((stop) => PointAnnotationOptions(
+    geometry: stop.location,
+    image: list, // <--- Just pass the raw bytes here
+    iconSize: 1.0,
+  )).toList();
+
+  // 4. Add them all at once
+  pointAnnotationManager?.createMulti(options);
+},
             cameraOptions: CameraOptions(
               center: Point(coordinates: Position(23.7257, 37.9715)),
               zoom: 12.0,

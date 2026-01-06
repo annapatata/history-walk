@@ -1,4 +1,5 @@
 import 'time_period.dart';
+import 'stopmodel.dart';
 
 class RouteModel {
   final String id;
@@ -10,6 +11,7 @@ class RouteModel {
   final Duration duration;
   final String difficulty;
   final List<String> stops;
+  //final List<StopModel> mapstops;
   final double rating;
   final int reviewCount;
   final bool isCompleted;
@@ -22,10 +24,17 @@ class RouteModel {
     required this.timePeriods,
     required this.duration,
     required this.stops,
+   // required this.mapstops,
     required this.difficulty,
     required this.rating,
     required this.reviewCount,
     required this.routepic,
     this.isCompleted = false
   });
+
+  // Helper method to get stops in the correct sequence
+  //List<StopModel> get sortedStops {
+  //  return mapstops..sort((a, b) => a.order.compareTo(b.order));
+  //}
+
 }
