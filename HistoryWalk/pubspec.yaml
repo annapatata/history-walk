@@ -28,13 +28,12 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  flutter:
+    sdk: flutter
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
   image_picker: ^1.0.7
   cloud_firestore: ^5.6.12
-  flutter:
-    sdk: flutter
-
     #Utility packages
   http: ^1.1.0  #for api calls e.g user data, routes etc
   intl: ^0.18.1  #internalization library - helps with dates,translations

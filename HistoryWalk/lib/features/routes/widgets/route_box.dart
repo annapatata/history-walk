@@ -15,7 +15,10 @@ class RouteBox extends StatelessWidget {
     final theme = Theme.of(context);
     final boxTheme = theme.extension<RouteBoxTheme>()!;
 
-    final stopText = route.stops.join(", ");
+    // Inside your RouteBox build method
+final stopText = route.mapstops.isNotEmpty 
+    ? route.mapstops.map((stop) => stop.name).join(", ") 
+    : "Loading stops..."; // Fallback if data hasn't arrived yet
 
     // Dynamic sizes based on screen width
     final imageWidth = screenWidth < 350 ? 80.0 : 100.0;
@@ -52,7 +55,8 @@ class RouteBox extends StatelessWidget {
                 route.routepic,
                 width: imageWidth,
                 height: imageHeight,
-                fit: BoxFit.contain,
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
               ),
             ),
 

@@ -7,8 +7,11 @@ import 'dart:typed_data';               // If processing image data for custom m
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:get/get.dart';
 import '../controller/map_controller.dart';
+import '../../routes/models/route_model.dart';
 
 class MapScreen extends StatefulWidget {
+  final RouteModel? selectedRoute; // Add this
+  const MapScreen({super.key, this.selectedRoute});
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
@@ -42,40 +45,69 @@ class _MapScreenState extends State<MapScreen> {
   }
 
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-      child:Stack(
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: SafeArea(
+      child: Stack(
         children: [
+          Obx(() {
+            if (controller.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          MapWidget(
-            onMapCreated: (MapboxMap map) async {
+            return MapWidget(
+              // 1. Move your initial camera options here
+              cameraOptions: CameraOptions(
+                center: Point(coordinates: Position(23.7257, 37.9715)),
+                zoom: 12.0,
+              ),
+              onMapCreated: (MapboxMap map) async {
   mapboxMap = map;
+  print("🛠️ Map Created. Starting marker logic...");
 
-  // 1. Load the image bytes from assets
-  final ByteData bytes = await rootBundle.load('assets/images/marker.png');
-  final Uint8List list = bytes.buffer.asUint8List();
+  try {
+    // 1. Load Image
+    final ByteData bytes = await rootBundle.load('assets/icons/marker.png');
+    final Uint8List list = bytes.buffer.asUint8List();
+    print("✅ 1. Icon loaded successfully");
 
-  // 2. Create the manager (this stays the same)
-  pointAnnotationManager = await map.annotations.createPointAnnotationManager();
+    // 2. Create Manager (IMPORTANT: Must await)
+    pointAnnotationManager = await map.annotations.createPointAnnotationManager();
+    print("✅ 2. Annotation Manager ready");
 
-  // 3. Create your markers
-  // Notice we use the 'image' property directly!
-  final options = controller.stops.map((stop) => PointAnnotationOptions(
-    geometry: stop.location,
-    image: list, // <--- Just pass the raw bytes here
-    iconSize: 1.0,
-  )).toList();
+    // 3. Check Data
+    final displayStops = controller.stops;
+    print("📊 3. Found ${displayStops.length} stops in controller");
 
-  // 4. Add them all at once
-  pointAnnotationManager?.createMulti(options);
+    if (displayStops.isEmpty) {
+      print("⚠️ 4. Stops list is empty. No markers to draw.");
+      return;
+    }
+
+    // 4. Map Options
+    final options = displayStops.map((stop) {
+      return PointAnnotationOptions(
+        geometry: Point(
+          coordinates: Position(stop.location.longitude, stop.location.latitude),
+        ),
+        image: list,
+        iconSize: 0.1,
+      );
+    }).toList();
+
+    // 5. Add to Map
+    await pointAnnotationManager?.createMulti(options);
+    print("🚀 5. Markers pushed to Mapbox!");
+
+  } catch (e) {
+    print("❌ ERROR in onMapCreated: $e");
+  }
 },
-            cameraOptions: CameraOptions(
-              center: Point(coordinates: Position(23.7257, 37.9715)),
-              zoom: 12.0,
-            ),
-          ),
+            );
+          }),
+          
+          
           
           // 2. Floating Action Button for Location
           Positioned(
@@ -93,16 +125,14 @@ class _MapScreenState extends State<MapScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
               child: Column(
                 children: [
-                  // Your Search Bar Widget
                   HWSearchBar(), 
-                  // You can add more floating buttons here (like a "Recenter" button)
                 ],
               ),
             ),
           ),
         ],
       ),
-      ),
-    );
-  }
+    ),
+  );
+}
 }

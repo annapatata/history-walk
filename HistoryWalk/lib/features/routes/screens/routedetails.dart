@@ -7,6 +7,9 @@ import '../../../common/widgets/primaryactionbutton.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
 import '../../reviews/widgets/writereview.dart';
 import 'reviews_screen.dart';
+import '../../map/screens/map_screen.dart';
+import '../../map/controller/map_controller.dart';
+import 'package:get/get.dart';
 
 final List<Review> dummyReviews = [
   Review(
@@ -66,8 +69,16 @@ class RouteDetails extends StatelessWidget {
       color: Colors.transparent, // Or your background color
       child: PrimaryActionButton(
         label: 'START ROUTE',
-        onPressed: () {
-          // TODO: Navigate to map screen
+        onPressed: () async {
+  final MapController mapController = Get.find();
+  
+  // 1. Trigger the fetch
+  // 2. IMPORTANT: Use 'await' so we don't move to the next screen until data is here
+  await mapController.loadRouteStops(route); 
+  
+  // 3. Now navigate
+  Get.to(() => MapScreen(selectedRoute: route));
+
         },
         backgroundcolour: AppColors.searchBarDark,
       ),

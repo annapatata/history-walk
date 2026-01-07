@@ -1,103 +1,105 @@
-// Routes_screen.dart
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Add this
 import '../widgets/route_box.dart';
-import '../models/time_period.dart';
-import 'package:historywalk/common/layouts/section_screen.dart';
 import '../models/route_model.dart';
 import 'routedetails.dart';
+import 'package:historywalk/common/layouts/section_screen.dart';
+import '../models/stopmodel.dart';
 
-//Screen Class
 class RoutesScreen extends StatelessWidget {
   const RoutesScreen({super.key});
 
-  static final List<RouteModel> dummyRoutes = [
-    RouteModel(
-      id: "1",
-      name: "Echoes of Rome",
-      description: "Explore the ruins of ancient Rome.",
-      imageUrl: ["assets/icons/image.png"],
-      timePeriods: [TimePeriod(startYear: -10, endYear: 130)],
-      duration: Duration(minutes: 45),
-      difficulty: "Cakewalk",
-      stops: ["Roman Agora", "Hadrian's Library", "Temple of Zeus"],
-      rating: 4.0,
-      reviewCount: 256,
-      routepic: "assets/icons/image.png",
-    ),
-    RouteModel(
-      id: "2",
-      name: "Whispers of the Acropolis",
-      description: "Discover the ancient Greek ruins.",
-      imageUrl: ["assets/icons/acropolis.png"],
-      timePeriods: [TimePeriod(startYear: -480, endYear: -404)],
-      duration: Duration(minutes: 35),
-      difficulty: "Moderate",
-      stops: ["Parthenon", "Erechtheion", "Temple of Athena Nike"],
-      rating: 4.0,
-      reviewCount: 400,
-      routepic: "assets/icons/acropolis.png",
-    ),
-    RouteModel(
-      id: "3",
-      name: "Whispers of the Acropolis",
-      description: "Discover the ancient Greek ruins.",
-      imageUrl: ["assets/icons/acropolis.png"],
-      timePeriods: [TimePeriod(startYear: -480, endYear: -404)],
-      duration: Duration(minutes: 35),
-      difficulty: "Moderate",
-      stops: ["Parthenon", "Erechtheion", "Temple of Athena Nike"],
-      rating: 4.0,
-      reviewCount: 400,
-      routepic: "assets/icons/acropolis.png",
-    ),
-    RouteModel(
-      id: "4",
-      name: "Whispers of the Acropolis",
-      description: "Discover the ancient Greek ruins.",
-      imageUrl: ["assets/icons/acropolis.png"],
-      timePeriods: [TimePeriod(startYear: -480, endYear: -404)],
-      duration: Duration(minutes: 35),
-      difficulty: "Moderate",
-      stops: ["Parthenon", "Erechtheion", "Temple of Athena Nike"],
-      rating: 4.0,
-      reviewCount: 400,
-      routepic: "assets/icons/acropolis.png",
-    ),
-    RouteModel(
-      id: "5",
-      name: "Whispers of the Acropolis",
-      description: "Discover the ancient Greek ruins.",
-      imageUrl: ["assets/icons/acropolis.png"],
-      timePeriods: [TimePeriod(startYear: -480, endYear: -404)],
-      duration: Duration(minutes: 35),
-      difficulty: "Moderate",
-      stops: ["Parthenon", "Erechtheion", "Temple of Athena Nike"],
-      rating: 4.0,
-      reviewCount: 400,
-      routepic: "assets/icons/acropolis.png",
-    ),
-  ];
+  // Function to fetch data from Firestore
+  Future<List<RouteModel>> getRoutesWithStops() async {
+  final firestore = FirebaseFirestore.instance;
+
+  // 1. Fetch all Routes
+  final routeSnapshot = await firestore.collection('routes').get();
+  
+  List<RouteModel> fullRoutes = [];
+
+  for (var routeDoc in routeSnapshot.docs) {
+    // Create the route from Firestore data
+    RouteModel route = RouteModel.fromFirestore(routeDoc);
+
+    // 2. Fetch the specific stops for THIS route
+    if (route.stops.isNotEmpty) {
+      final stopsSnapshot = await firestore
+          .collection('stops')
+          .where(FieldPath.documentId, whereIn: route.stops)
+          .get();
+
+      // Convert stop docs to StopModel objects
+      List<StopModel> fetchedStops = stopsSnapshot.docs
+          .map((doc) => StopModel.fromFirestore(doc))
+          .toList();
+
+      // Sort them by your 'order' field to ensure Stop 1 is before Stop 2
+      fetchedStops.sort((a, b) => a.order.compareTo(b.order));
+
+      // 3. Attach them to the mapstops field
+      route = RouteModel(
+        id: route.id,
+        name: route.name,
+        description: route.description,
+        imageUrl: route.imageUrl,
+        routepic: route.routepic,
+        timePeriods: route.timePeriods,
+        duration: route.duration,
+        difficulty: route.difficulty,
+        stops: route.stops,
+        mapstops: fetchedStops, 
+        rating: route.rating,
+        reviewCount: route.reviewCount,
+      );
+    }
+    
+    fullRoutes.add(route);
+  }
+
+  return fullRoutes;
+}
 
   @override
   Widget build(BuildContext context) {
     return SectionScreenLayout(
       title: 'ROUTES',
-      body: ListView(
-        children: dummyRoutes
-            .map(
-              (route) => RouteBox(
+      body: FutureBuilder<List<RouteModel>>(
+        future: getRoutesWithStops(),
+        builder: (context, snapshot) {
+          // 1. Show loading spinner while waiting
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // 2. Show error message if something goes wrong
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          // 3. Show message if database is empty
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No routes found.'));
+          }
+
+          // 4. Show the list of actual routes
+          final routes = snapshot.data!;
+          return ListView.builder(
+            itemCount: routes.length,
+            itemBuilder: (context, index) {
+              final route = routes[index];
+              return RouteBox(
                 route: route,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => RouteDetails(
-                      route: route,
-                    ),
+                    builder: (context) => RouteDetails(route: route),
                   ),
-                )
-              ),
-            )
-            .toList(),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

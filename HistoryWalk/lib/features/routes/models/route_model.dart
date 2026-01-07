@@ -1,5 +1,6 @@
 import 'time_period.dart';
 import 'stopmodel.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RouteModel {
   final String id;
@@ -11,7 +12,7 @@ class RouteModel {
   final Duration duration;
   final String difficulty;
   final List<String> stops;
-  //final List<StopModel> mapstops;
+  final List<StopModel> mapstops;
   final double rating;
   final int reviewCount;
   final bool isCompleted;
@@ -24,7 +25,7 @@ class RouteModel {
     required this.timePeriods,
     required this.duration,
     required this.stops,
-   // required this.mapstops,
+    required this.mapstops,
     required this.difficulty,
     required this.rating,
     required this.reviewCount,
@@ -33,8 +34,25 @@ class RouteModel {
   });
 
   // Helper method to get stops in the correct sequence
-  //List<StopModel> get sortedStops {
-  //  return mapstops..sort((a, b) => a.order.compareTo(b.order));
-  //}
+  List<StopModel> get sortedStops {
+    return mapstops..sort((a, b) => a.order.compareTo(b.order));
+  }
 
+  factory RouteModel.fromFirestore(DocumentSnapshot doc) {
+  Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+  return RouteModel(
+    id: doc.id,
+    name: data['name'] ?? '',
+    description: data['description'] ?? '',
+    routepic: data['routepic'] ?? '',
+    difficulty: data['difficulty'] ?? '',
+    rating: (data['rating'] ?? 0.0).toDouble(),
+    reviewCount: data['reviewCount'] ?? 0,
+    stops: List<String>.from(data['stops'] ?? []),
+    mapstops: [], // We leave this empty initially
+    imageUrl: List<String>.from(data['imageUrl'] ?? []),
+    timePeriods: [], // Map these if you have a TimePeriod enum/class
+    duration: Duration(minutes: data['duration_minutes'] ?? 0),
+  );
+}
 }
