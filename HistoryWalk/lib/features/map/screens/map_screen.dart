@@ -24,9 +24,49 @@ class _MapScreenState extends State<MapScreen> {
   PointAnnotationManager? pointAnnotationManager;
   PolylineAnnotationManager? polylineAnnotationManager;
   Map<String, StopModel> markerToStopMap = {};
-  StreamSubscription? markerSubscription;
+  StopModel? currentStop;
 
-  // 1. Function to find and move to user location
+  @override
+  void dispose(){
+    super.dispose();
+  }
+
+  //  Focus camera on the first stop of the selected route
+  void _focusOnFirstStop(List<StopModel> stops) {
+  if (stops.isEmpty) return;
+  currentStop = stops[0];
+  mapboxMap?.setCamera(
+    CameraOptions(
+      center: Point(
+        coordinates: Position(stops[0].location.longitude, stops[0].location.latitude),
+      ),
+      zoom: 16.0, // Πιο κοντινό ζουμ για την ξενάγηση
+      bearing: 0,
+      pitch: 45, // Προαιρετικά: μια μικρή κλίση για 3D αίσθηση
+    ),
+  );
+  }
+
+  //  Handle moving to the next stop
+  void _handleNextStop(StopModel nextStop) {
+  currentStop = nextStop;
+  mapboxMap?.setCamera(
+    CameraOptions(
+      center: Point(
+        coordinates: Position(
+          nextStop.location.longitude,
+          nextStop.location.latitude,
+        ),
+      ),
+      zoom: 16.0,
+    ),
+  );
+  Future.delayed(Duration(seconds: 2), (){
+    _showRouteProgress(nextStop);
+  });
+ }
+
+  //  Function to find and move to user location
   Future<void> _goToUserLocation() async {
     // Check/Request permissions
     geo.LocationPermission permission = await geo.Geolocator.checkPermission();
@@ -56,6 +96,7 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  //  Draw routes and stops on the map
   Future<void> _drawRoutes(List<RouteModel> routes) async {
     if (polylineAnnotationManager == null || pointAnnotationManager == null) {
       print("⚠️ Managers not ready yet");
@@ -118,61 +159,113 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _showStopDetails(StopModel stop) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor:
-          Colors.transparent, // Για να φαίνονται οι στρογγυλεμένες γωνίες
-      isScrollControlled: true, // Επιτρέπει στο sheet να μεγαλώσει αν χρειαστεί
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // Προσαρμόζεται στο περιεχόμενο
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Μια μικρή γραμμή στην κορυφή (handle)
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(10),
+  //  Show bottom sheet with route progress and controls
+  void _showRouteProgress(StopModel stop) {
+  controller.startRouteAudio(stop.historyContent);
+
+  showModalBottomSheet(
+    context: context,
+    isDismissible: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+    ),
+    builder: (context) {
+      return Obx(() => Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1. Progress Bar στην κορυφή
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: controller.progress,
+                    backgroundColor: Colors.grey[200],
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE9B32A)),
+                    minHeight: 8,
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                stop.name,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 10),
+                
+                // Εμφάνιση αρίθμησης (π.χ. 2 / 5)
+                Text(
+                  "${controller.currentParagraphIndex.value + 1} από ${controller.paragraphs.length}",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
-              ),
-              const SizedBox(height: 15),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.4,
+                
+                const SizedBox(height: 15),
+                Text(
+                  stop.name,
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-                child: SingleChildScrollView(
-                  child: Text(
-                    stop.historyContent, // Χρήση του πεδίου από το μοντέλο σου
-                    style: const TextStyle(fontSize: 16, height: 1.5),
+                const SizedBox(height: 15),
+
+                // 2. Το κείμενο της τρέχουσας παραγράφου
+                Container(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.3,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Text(
+                      controller.paragraphs[controller.currentParagraphIndex.value],
+                      style: const TextStyle(fontSize: 16, height: 1.5),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
+
+                const SizedBox(height: 20),
+
+                // 3. Controls (Play/Pause & Next)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        controller.isPaused.value ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                        size: 40,
+                        color: Colors.black87,
+                      ),
+                      onPressed: () => controller.togglePause(),
+                    ),
+                    if (controller.currentParagraphIndex.value < controller.paragraphs.length - 1)
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE9B32A),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          if (controller.currentParagraphIndex.value < controller.paragraphs.length -1) {
+                            controller.nextParagraph();
+                          } else {
+                        // Αν τελείωσαν οι παράγραφοι, ψάχνουμε την επόμενη στάση
+                        final stops = widget.selectedRoute!.mapstops;
+                        final currentIndex = stops.indexWhere((s) => s.id == stop.id);
+                        
+                        if (currentIndex != -1 && currentIndex < stops.length - 1) {
+                          print("Μετακίνηση στην επόμενη στάση");
+                          Navigator.pop(context); // Κλείνουμε το τρέχον sheet
+                          _handleNextStop(stops[currentIndex + 1]);
+                        } else {
+                          Get.snackbar("Τέλος", "Ολοκληρώσατε τη διαδρομή!");
+                        }
+                      }
+                    },
+                        icon: const Icon(Icons.skip_next),
+                        label: Text(controller.currentParagraphIndex.value < controller.paragraphs.length - 1 
+                        ? "Επόμενο" 
+                        : "Επόμενη Στάση"),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ));
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -188,42 +281,33 @@ class _MapScreenState extends State<MapScreen> {
               ),
               onMapCreated: (MapboxMap map) async {
                 mapboxMap = map;
-                print("🛠️ Map Created. Starting marker logic...");
 
                 try {
                   // 2. Create Managers (IMPORTANT: Must await)
                   pointAnnotationManager = await map.annotations
                       .createPointAnnotationManager();
-                  print("✅ 2. Annotation Manager ready");
                   polylineAnnotationManager = await map.annotations
                       .createPolylineAnnotationManager();
-                  print("✅ 2b. Polyline Annotation Manager ready");
 
                   // 3. Set up marker tap listener
 
                   
                   pointAnnotationManager?.tapEvents(
                     onTap: (PointAnnotation annotation) {
-                      print("Marker tapped: ${annotation.id}");
                       final stop = markerToStopMap[annotation.id];
                       if (stop != null) {
-                        _showStopDetails(stop);
+                        currentStop = stop;
+                        _showRouteProgress(stop);
                       }
                     },
                   );
-
-                  print("✅ 3. Marker tap listener set up");
-                  @override
-                  void dispose() {
-                    markerSubscription?.cancel(); // Πολύ σημαντικό!
-                    super.dispose();
-                  }
 
                   // Give the platform channel a tiny breath to establish connection
                   await Future.delayed(const Duration(milliseconds: 100));
                   // 2. Decide what data to show
                   // If widget.selectedRoute is null, we are in "Global Map" mode
                   if (widget.selectedRoute != null) {
+                    
                     await controller.loadRouteStops(widget.selectedRoute!);
                     widget.selectedRoute!.mapstops = controller.stops;
                     _drawRoutes([widget.selectedRoute!]);
@@ -237,8 +321,18 @@ class _MapScreenState extends State<MapScreen> {
                 } finally {
                   controller.isLoading.value = false;
                 }
-              },
-            ),
+                
+
+                // If in route-specific mode, focus on the first stop
+                if (widget.selectedRoute != null) {
+                  _focusOnFirstStop(widget.selectedRoute!.mapstops);
+                } else {
+                  mapboxMap?.setCamera(CameraOptions(
+                center: Point(coordinates: Position(23.7257, 37.9715)),
+                zoom: 12.0,
+              ));
+                }
+              }),
             Obx(() {
               if (controller.isLoading.value) {
                 return Container(

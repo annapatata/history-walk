@@ -2,9 +2,88 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../routes/models/stopmodel.dart';
 import '../../routes/models/route_model.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class MapController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FlutterTts flutterTts = FlutterTts();
+  var currentParagraphIndex = 0.obs;
+  var isPaused = false.obs;
+  List<String> paragraphs = [];
+
+  void initTts() async {
+  await flutterTts.setLanguage("el-GR");
+  await flutterTts.setSpeechRate(0.5); // Κανονική ταχύτητα ομιλίας
+  await flutterTts.setVolume(1.0);
+  }
+
+  Function? onRouteStepFinished;
+
+
+  double get progress => paragraphs.isEmpty ? 0.0 : (currentParagraphIndex.value + 1) / paragraphs.length;
+
+  void startRouteAudio(String fullText) async{
+    paragraphs = fullText.split('\n').where((p)=>p.trim().isNotEmpty).toList();
+    currentParagraphIndex.value = 0;
+    _readCurrentParagraph();
+  }
+
+  void _readCurrentParagraph() async {
+    if (currentParagraphIndex.value < paragraphs.length && !isPaused.value) {
+      String paragraph = paragraphs[currentParagraphIndex.value];
+      await flutterTts.speak(paragraph);
+      flutterTts.setCompletionHandler(() {
+        if (!isPaused.value && currentParagraphIndex.value < paragraphs.length - 1){
+          Future.delayed(Duration(seconds: 2),(){
+            nextParagraph();
+          });
+        }else{
+          //Τέλος κειμένου
+          if(onRouteStepFinished != null)
+          {onRouteStepFinished?.call();}
+        }
+      });
+    }
+  }
+
+  void nextParagraph(){
+    if (currentParagraphIndex.value < paragraphs.length-1){
+      currentParagraphIndex.value++;
+      _readCurrentParagraph();
+    }
+  }
+
+  void togglePause(){
+    isPaused.value = !isPaused.value;
+    if (!isPaused.value){
+      _readCurrentParagraph();
+    } else {
+      flutterTts.stop();
+    }
+  }
+
+
+  void onStopFinished(StopModel currentStop, List<StopModel> allStops, Function(StopModel) onNextStopReady){
+    //βρίσκουμε την θέση της τρέχουσας στάσης στη λίστα
+    int currentIndex = allStops.indexWhere((stop) => stop.id == currentStop.id);
+    if (currentIndex != -1 && currentIndex < allStops.length - 1){
+      //υπάρχει επόμενη στάση
+      StopModel nextStop = allStops[currentIndex + 1];
+      flutterTts.stop(); //σταματάμε την ανάγνωση
+      Get.back(); //επιστρέφουμε στο χάρτη
+      Future.delayed(Duration(milliseconds: 500), (){
+        //μικρή καθυστέρηση για να αποφύγουμε προβλήματα με το Get.back()
+        onNextStopReady(nextStop);
+      });
+    } else {
+      //δεν υπάρχει επόμενη στάση
+      flutterTts.stop();
+      Get.back(); //επιστρέφουμε στο χάρτη
+      Get.snackbar("Τέλος Διαδρομής", "Έχετε ολοκληρώσει όλες τις στάσεις της διαδρομής!",
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
 
   // Observable variables (.obs) allow the UI to update automatically
   var stops = <StopModel>[].obs;
