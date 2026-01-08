@@ -12,10 +12,11 @@ class RouteModel {
   final Duration duration;
   final String difficulty;
   final List<String> stops;
-  final List<StopModel> mapstops;
+  List<StopModel> mapstops;
   final double rating;
   final int reviewCount;
   final bool isCompleted;
+  final int color; 
 
   RouteModel({
     required this.id,
@@ -30,7 +31,8 @@ class RouteModel {
     required this.rating,
     required this.reviewCount,
     required this.routepic,
-    this.isCompleted = false
+    this.isCompleted = false,
+    required this.color,
   });
 
   // Helper method to get stops in the correct sequence
@@ -53,6 +55,7 @@ class RouteModel {
     imageUrl: List<String>.from(data['imageUrl'] ?? []),
     timePeriods: [], // Map these if you have a TimePeriod enum/class
     duration: Duration(minutes: data['duration_minutes'] ?? 0),
+    color: data['color'] ?? 0xFF000000,
   );
 }
 }

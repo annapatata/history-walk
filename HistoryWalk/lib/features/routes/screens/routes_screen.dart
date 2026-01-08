@@ -51,6 +51,7 @@ class RoutesScreen extends StatelessWidget {
         mapstops: fetchedStops, 
         rating: route.rating,
         reviewCount: route.reviewCount,
+        color: route.color,
       );
     }
     
