@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:historywalk/common/widgets/searchbar.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'; // For the MapWidget and Controller
 import 'package:flutter/services.dart'; // If loading custom map styles or icons from assets
-import 'dart:typed_data'; // If processing image data for custom markers
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:get/get.dart';
 import '../controller/map_controller.dart';
@@ -12,59 +11,52 @@ import '../../routes/models/stopmodel.dart';
 import 'dart:async';
 
 class MapScreen extends StatefulWidget {
-  final RouteModel? selectedRoute; // Add this
+  final RouteModel? selectedRoute; // If null, show all routes
   const MapScreen({super.key, this.selectedRoute});
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
-  final MapController controller = Get.put(MapController());
+  final MapController controller = Get.find<MapController>();
   MapboxMap? mapboxMap;
   PointAnnotationManager? pointAnnotationManager;
   PolylineAnnotationManager? polylineAnnotationManager;
   Map<String, StopModel> markerToStopMap = {};
-  StopModel? currentStop;
 
   @override
-  void dispose(){
-    super.dispose();
+  void initState() {
+    super.initState();
+    //listen for when a stop is finished to move the camera
+    ever(controller.currentStop, (StopModel? stop) {
+      if (stop != null) {
+        _moveCameraToStop(stop);
+
+      }
+    });
+  }
+
+  void _moveCameraToStop(StopModel stop) {
+    mapboxMap?.flyTo(
+      CameraOptions(
+        center: Point(
+          coordinates: Position(
+            stop.location.longitude,
+            stop.location.latitude,
+          ),
+        ),
+        zoom: 16.0,
+        pitch: 45, // slight tilt for 3D effect
+      ),
+      MapAnimationOptions(duration: 2000),
+    );
   }
 
   //  Focus camera on the first stop of the selected route
   void _focusOnFirstStop(List<StopModel> stops) {
-  if (stops.isEmpty) return;
-  currentStop = stops[0];
-  mapboxMap?.setCamera(
-    CameraOptions(
-      center: Point(
-        coordinates: Position(stops[0].location.longitude, stops[0].location.latitude),
-      ),
-      zoom: 16.0, // Πιο κοντινό ζουμ για την ξενάγηση
-      bearing: 0,
-      pitch: 45, // Προαιρετικά: μια μικρή κλίση για 3D αίσθηση
-    ),
-  );
+    if (stops.isEmpty) return;
+    _moveCameraToStop(stops[0]);
   }
-
-  //  Handle moving to the next stop
-  void _handleNextStop(StopModel nextStop) {
-  currentStop = nextStop;
-  mapboxMap?.setCamera(
-    CameraOptions(
-      center: Point(
-        coordinates: Position(
-          nextStop.location.longitude,
-          nextStop.location.latitude,
-        ),
-      ),
-      zoom: 16.0,
-    ),
-  );
-  Future.delayed(Duration(seconds: 2), (){
-    _showRouteProgress(nextStop);
-  });
- }
 
   //  Function to find and move to user location
   Future<void> _goToUserLocation() async {
@@ -161,43 +153,62 @@ class _MapScreenState extends State<MapScreen> {
 
   //  Show bottom sheet with route progress and controls
   void _showRouteProgress(StopModel stop) {
-  controller.startRouteAudio(stop.historyContent);
+    //initialize the audio and paragraphs in the controller
+    final allStops = widget.selectedRoute!.mapstops;
+    controller.startStopPresentation(stop, allStops);
 
-  showModalBottomSheet(
-    context: context,
-    isDismissible: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-    ),
-    builder: (context) {
-      return Obx(() => Container(
+    showModalBottomSheet(
+      context: context,
+      isDismissible: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return Obx(
+          () => Container(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 1. Progress Bar στην κορυφή
+                //handle for dragging
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                // Progress Bar
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
                     value: controller.progress,
                     backgroundColor: Colors.grey[200],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE9B32A)),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFFE9B32A),
+                    ),
                     minHeight: 8,
                   ),
                 ),
                 const SizedBox(height: 10),
-                
+
                 // Εμφάνιση αρίθμησης (π.χ. 2 / 5)
                 Text(
                   "${controller.currentParagraphIndex.value + 1} από ${controller.paragraphs.length}",
                   style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
-                
+
                 const SizedBox(height: 15),
                 Text(
                   stop.name,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 15),
 
@@ -208,7 +219,11 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   child: SingleChildScrollView(
                     child: Text(
-                      controller.paragraphs[controller.currentParagraphIndex.value],
+                      controller.paragraphs.isNotEmpty
+                          ? controller.paragraphs[controller
+                                .currentParagraphIndex
+                                .value]
+                          : "Loading...",
                       style: const TextStyle(fontSize: 16, height: 1.5),
                     ),
                   ),
@@ -221,51 +236,80 @@ class _MapScreenState extends State<MapScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
+                      onPressed: () => controller.moveToPreviousStop(),
+                      icon: const Icon(
+                        Icons.skip_previous_rounded,
+                        size: 30,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => controller.previousParagraph(),
+                      icon: const Icon(
+                        Icons.keyboard_arrow_left_rounded,
+                        size: 35,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    IconButton(
                       icon: Icon(
-                        controller.isPaused.value ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                        size: 40,
+                        controller.isPaused.value
+                            ? Icons.play_arrow_rounded
+                            : Icons.pause_rounded,
+                        size: 30,
                         color: Colors.black87,
                       ),
                       onPressed: () => controller.togglePause(),
                     ),
-                    if (controller.currentParagraphIndex.value < controller.paragraphs.length - 1)
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE9B32A),
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () {
-                          if (controller.currentParagraphIndex.value < controller.paragraphs.length -1) {
-                            controller.nextParagraph();
-                          } else {
-                        // Αν τελείωσαν οι παράγραφοι, ψάχνουμε την επόμενη στάση
-                        final stops = widget.selectedRoute!.mapstops;
-                        final currentIndex = stops.indexWhere((s) => s.id == stop.id);
-                        
-                        if (currentIndex != -1 && currentIndex < stops.length - 1) {
-                          print("Μετακίνηση στην επόμενη στάση");
-                          Navigator.pop(context); // Κλείνουμε το τρέχον sheet
-                          _handleNextStop(stops[currentIndex + 1]);
-                        } else {
-                          Get.snackbar("Τέλος", "Ολοκληρώσατε τη διαδρομή!");
-                        }
-                      }
-                    },
-                        icon: const Icon(Icons.skip_next),
-                        label: Text(controller.currentParagraphIndex.value < controller.paragraphs.length - 1 
-                        ? "Επόμενο" 
-                        : "Επόμενη Στάση"),
+
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE9B32A),
+                        foregroundColor: Colors.white,
                       ),
+                      onPressed: () {
+                        if (controller.currentParagraphIndex.value <
+                            controller.paragraphs.length - 1) {
+                          controller.nextParagraph();
+                        } else {
+                          // Αν τελείωσαν οι παράγραφοι, ψάχνουμε την επόμενη στάση
+                          final stops = widget.selectedRoute!.mapstops;
+                          final currentIndex = stops.indexWhere(
+                            (s) => s.id == stop.id,
+                          );
+
+                          if (currentIndex != -1 &&
+                              currentIndex < stops.length - 1) {
+                            controller.moveToNextStop();
+                          } else {
+                            // Τελείωσαν όλες οι στάσεις
+                            Navigator.pop(context); // Κλείνουμε το bottom sheet
+                          }
+                        }
+                      },
+                      icon: Icon(
+                        controller.currentParagraphIndex.value <
+                                controller.paragraphs.length - 1
+                            ? Icons.skip_next
+                            : Icons.check_circle,
+                      ),
+                      label: Text(
+                        controller.currentParagraphIndex.value <
+                                controller.paragraphs.length - 1
+                            ? "Επόμενο"
+                            : "Ολοκλήρωση",
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
               ],
             ),
-          ));
-    },
-  );
-}
-
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -291,12 +335,10 @@ class _MapScreenState extends State<MapScreen> {
 
                   // 3. Set up marker tap listener
 
-                  
                   pointAnnotationManager?.tapEvents(
                     onTap: (PointAnnotation annotation) {
                       final stop = markerToStopMap[annotation.id];
                       if (stop != null) {
-                        currentStop = stop;
                         _showRouteProgress(stop);
                       }
                     },
@@ -307,7 +349,6 @@ class _MapScreenState extends State<MapScreen> {
                   // 2. Decide what data to show
                   // If widget.selectedRoute is null, we are in "Global Map" mode
                   if (widget.selectedRoute != null) {
-                    
                     await controller.loadRouteStops(widget.selectedRoute!);
                     widget.selectedRoute!.mapstops = controller.stops;
                     _drawRoutes([widget.selectedRoute!]);
@@ -321,18 +362,20 @@ class _MapScreenState extends State<MapScreen> {
                 } finally {
                   controller.isLoading.value = false;
                 }
-                
 
                 // If in route-specific mode, focus on the first stop
                 if (widget.selectedRoute != null) {
                   _focusOnFirstStop(widget.selectedRoute!.mapstops);
                 } else {
-                  mapboxMap?.setCamera(CameraOptions(
-                center: Point(coordinates: Position(23.7257, 37.9715)),
-                zoom: 12.0,
-              ));
+                  mapboxMap?.setCamera(
+                    CameraOptions(
+                      center: Point(coordinates: Position(23.7257, 37.9715)),
+                      zoom: 12.0,
+                    ),
+                  );
                 }
-              }),
+              },
+            ),
             Obx(() {
               if (controller.isLoading.value) {
                 return Container(

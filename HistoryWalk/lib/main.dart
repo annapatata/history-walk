@@ -3,6 +3,8 @@ import 'package:historywalk/app.dart';
 // import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../features/map/controller/map_controller.dart';
+import 'package:get/get.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +14,8 @@ void main() async {
 
   // Init GetStorage
   await GetStorage.init();
+
+  Get.put(MapController(),permanent:true);
 
   // // Mapbox token
   // String token = const String.fromEnvironment("ACCESS_TOKEN");
