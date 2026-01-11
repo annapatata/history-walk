@@ -159,9 +159,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Register Button
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _register,
-                        child: const Text("Register"),
+                      child: Obx(
+                        () => ElevatedButton(
+                          onPressed: authController.isLoading.value
+                              ? null
+                              : _register,
+                          child: authController.isLoading.value
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text("Register"),
+                        ),
                       ),
                     ),
 

@@ -9,6 +9,7 @@ import 'package:historywalk/features/auth/screens/register/register_screen.dart'
 import '../../controller/login_controller.dart';
 import '../../../../navigation_menu.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get_storage/get_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,6 +33,16 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  @override
+  void initState(){
+    super.initState();
+    //auto-full the email if it was saved
+    final box = GetStorage();
+    if( box.read('REMEMBER_ME_BOOL')==true){
+      emailController.text = box.read('REMEMBER_ME_EMAIL') ?? "";
+      authController.rememberMe.value = true;
+    }
+  }
   void _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -40,8 +51,8 @@ class _LoginScreenState extends State<LoginScreen> {
       passwordController.text.trim(),
     );
 
-    if(success){
-      Get.offAll(()=>const NavigationMenu());
+    if (success) {
+      Get.offAll(() => const NavigationMenu());
     }
   }
 
@@ -54,9 +65,11 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               // Title
-              Text(AppTexts.loginTitle,
-                  style: Theme.of(context).textTheme.headlineMedium),
-              
+              Text(
+                AppTexts.loginTitle,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+
               const SizedBox(height: AppSizes.spaceBtwSections / 2),
 
               // Form
@@ -84,29 +97,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: AppSizes.spaceBtwItems),
 
                     // Password
-                    Obx(()=>TextFormField(
-                      controller: passwordController,
-                      obscureText: !controller.isPasswordVisible.value,
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.password_outlined),
-                        labelText: "Password",
-                        suffixIcon: IconButton(
-                          icon: Icon(controller.isPasswordVisible.value ? Icons.visibility_outlined : Icons.visibility_off_outlined), 
-                         onPressed: controller.toggleVisibility,),
+                    Obx(
+                      () => TextFormField(
+                        controller: passwordController,
+                        obscureText: !controller.isPasswordVisible.value,
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(Icons.password_outlined),
+                          labelText: "Password",
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              controller.isPasswordVisible.value
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                            ),
+                            onPressed: controller.toggleVisibility,
+                          ),
+                        ),
+
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Password is required";
+                          }
+                          if (value.length < 6) {
+                            return "Password must be at least 6 characters";
+                          }
+                          return null;
+                        },
                       ),
-                    
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Password is required";
-                        }
-                        if (value.length < 6) {
-                          return "Password must be at least 6 characters";
-                        }
-                        return null;
-                      },
                     ),
-                    ),
-                
+
                     const SizedBox(height: AppSizes.spaceBtwItems / 2),
 
                     // Remember Me & Forget Password
@@ -115,12 +134,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Row(
                           children: [
-                            Checkbox(value: true, onChanged: (value) {}),
+                            Obx(()=>
+                            Checkbox(
+                              value: authController.rememberMe.value,
+                              onChanged: (value) => authController.toggleRememberMe(value))),
                             const Text("Remember Me"),
                           ],
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => authController.sendPasswordResetEmail(emailController.text.trim()),
                           child: const Text("Forget Password?"),
                         ),
                       ],
@@ -130,9 +152,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Login Button
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _login,
-                        child: const Text("Let's Go!"),
+                      child: Obx(
+                        () => ElevatedButton(
+                          onPressed: authController.isLoading.value
+                              ? null
+                              : _login,
+                          child: authController.isLoading.value
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text("Let's Go!"),
+                        ),
                       ),
                     ),
 
@@ -144,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Get.to(() => const RegisterScreen());
                       },
                       child: const Text("Don't have an account? Register"),
-                    )
+                    ),
                   ],
                 ),
               ),
