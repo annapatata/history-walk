@@ -95,9 +95,11 @@ class _TopSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               image: avatarPath.isNotEmpty
                   ? DecorationImage(
-                      image: avatarPath.startsWith('assets/')
-                          ? AssetImage(avatarPath)
-                          : FileImage(File(avatarPath)) as ImageProvider,
+                    image: avatarPath.startsWith('http') //handle network urls
+                    ? NetworkImage(avatarPath)
+                      : avatarPath.startsWith('assets/')
+                          ? AssetImage(avatarPath) as ImageProvider
+                          : FileImage(File(avatarPath)), //handle local files
                       fit: BoxFit.cover,
                     )
                   : null,

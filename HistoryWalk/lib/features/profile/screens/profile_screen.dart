@@ -20,54 +20,63 @@ class ProfileScreen extends StatelessWidget {
     return SectionScreenLayout(
       title: 'PROFILE',
       showSearch: false,
-      body: Obx(
-        () => ListView(
-  padding: const EdgeInsets.all(16),
-  children: [
-    // 1. PASSPORT CARD WITH PENCIL OVERLAY
-    Stack(
-      children: [
-        // Your existing card logic
-        PassportCard(
-          name: controller.userProfile.value.name,
-          nationality: controller.userProfile.value.nationality,
-          joinedDate: DateFormat('dd/MM/yyyy')
-              .format(controller.userProfile.value.firstLoginDate),
-          level: controller.levelTitle,
-          avatarPath: controller.userProfile.value.avatarPath,
-          onAvatarTap: () => _showAvatarOptions(context),
-          onBadgesTap: () {
-            showDialog(
-              context: context,
-              barrierDismissible: true,
-              builder: (_) => const BadgesSheet(),
-            );
-          },
-        ),
-        
-        // The Pencil Icon positioned top-right
-        Positioned(
-          top: 8,
-          right: 8,
-          child: CircleAvatar(
-            backgroundColor: Colors.white.withOpacity(0.8),
-            radius: 18,
-            child: IconButton(
-              icon: const Icon(Icons.edit, size: 18, color: Colors.black),
-              onPressed: () => _showEditProfileDialog(context),
+      body: Obx(() {
+  // 1. Παίρνουμε μια τοπική αναφορά (shadow variable)
+  final user = controller.userProfile.value;
+
+  // 2. Αν ο χρήστης είναι null, δείξε error text
+  if (user == null) {
+    return const Center(
+      child: Text("could not load profile")
+    );
+  }
+
+  //3.Αν ο Controller εχει σημα Loading
+  if(controller.isLoading.value){
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  // 3. Αν έχουμε χρήστη, δείξε τα δεδομένα κανονικά χρησιμοποιώντας τη μεταβλητή 'user'
+  return ListView(
+    padding: const EdgeInsets.all(16),
+    children: [
+      Stack(
+        children: [
+          PassportCard(
+            name: user.name, // Χρησιμοποιούμε το 'user' που ξέρουμε ότι δεν είναι null
+            nationality: user.nationality,
+            joinedDate: DateFormat('dd/MM/yyyy').format(user.firstLoginDate),
+            level: controller.levelTitle,
+            avatarPath: user.avatarPath,
+            onAvatarTap: () => _showAvatarOptions(context),
+            onBadgesTap: () {
+              showDialog(
+                context: context,
+                barrierDismissible: true,
+                builder: (_) => const BadgesSheet(),
+              );
+            },
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: CircleAvatar(
+              backgroundColor: Colors.white.withOpacity(0.8),
+              radius: 18,
+              child: IconButton(
+                icon: const Icon(Icons.edit, size: 18, color: Colors.black),
+                onPressed: () => _showEditProfileDialog(context),
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-    
-    const SizedBox(height: 12),
-
-    ProfileProgressBar(
-      progress: controller.userProfile.value.progress.toDouble(),
-      label: 'Exploring Athens',
-      icon: const Icon(Icons.account_balance, size: 20),
-    ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      ProfileProgressBar(
+        progress: user.progress.toDouble(),
+        label: 'Exploring Athens',
+        icon: const Icon(Icons.account_balance, size: 20),
+      ),
 
     const SizedBox(height: 32), // More spacing before logout
 
@@ -105,10 +114,15 @@ class ProfileScreen extends StatelessWidget {
       ),
     ),
   ],
-),
-      ),
+);
+      
+      }),
     );
   }
+      
+      
+    
+  
 
   // =========================
   // Avatar options
@@ -174,10 +188,10 @@ class ProfileScreen extends StatelessWidget {
 
   void _showEditProfileDialog(BuildContext context) {
     final nameController = TextEditingController(
-      text: controller.userProfile.value.name,
+      text: controller.userProfile.value!.name,
     );
     final nationalityController = TextEditingController(
-      text: controller.userProfile.value.nationality,
+      text: controller.userProfile.value!.nationality,
     );
 
     showDialog(

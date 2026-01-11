@@ -15,8 +15,8 @@ void main() async {
   // Init GetStorage
   await GetStorage.init();
 
-  Get.put(MapController(),permanent:true);
 
+  Get.put(MapController(),permanent:true);
   // // Mapbox token
   // String token = const String.fromEnvironment("ACCESS_TOKEN");
   // MapboxOptions.setAccessToken(token);

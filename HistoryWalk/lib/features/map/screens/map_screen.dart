@@ -296,8 +296,8 @@ class _MapScreenState extends State<MapScreen> {
                       label: Text(
                         controller.currentParagraphIndex.value <
                                 controller.paragraphs.length - 1
-                            ? "Επόμενο"
-                            : "Ολοκλήρωση",
+                            ? "Next"
+                            : "Complete",
                       ),
                     ),
                   ],

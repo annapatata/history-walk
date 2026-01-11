@@ -1,18 +1,25 @@
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get_storage/get_storage.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
 import '../models/badge.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileController extends GetxController {
+
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
   final ImagePicker _picker = ImagePicker();
   final GetStorage _box = GetStorage();
-
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   static const String _userKey = 'user_profile';
   static const String _badgesKey = 'user_badges';
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  late Rx<UserProfile> userProfile;
+  //use rxn so it can be null until data arrives
+  Rxn<UserProfile> userProfile = Rxn<UserProfile>();
 
   // 🏅 Badges
   final RxList<Badge> badges = <Badge>[].obs;
@@ -27,39 +34,67 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadOrCreateUser();
     _initBadges();
+
+  final currentUser = FirebaseAuth.instance.currentUser;
+  if(currentUser!=null){
+  fetchUserProfile(currentUser.uid);
+  }else {
+    print("cannot fetch profile, no user logged in");
+  }
+  }
+
+  Future<String> _uploadImage(String localPath) async {
+    File file = File(localPath);
+    //create a unique filename using the userID
+
+    String userId = userProfile.value!.uid;
+    Reference ref = _storage.ref().child('avatars').child('$userId.jpg');
+
+    UploadTask uploadTask = ref.putFile(file);
+    TaskSnapshot snapshot = await uploadTask;
+
+    return await snapshot.ref.getDownloadURL();
   }
 
   // =========================
   // USER PROFILE
   // =========================
 
-  void _loadOrCreateUser() {
-    final stored = _box.read(_userKey);
+  Future<void> _saveUser() async {
+    if (userProfile.value == null) return;
 
-    if (stored != null) {
-      userProfile = UserProfile.fromJson(
-        Map<String, dynamic>.from(stored),
-      ).obs;
-    } else {
-      userProfile = UserProfile(
-        name: 'Guest',
-        nationality: 'Unknown',
-        avatarPath: '',
-        firstLoginDate: DateTime.now(),
-        level: 1,
-        progress: 0,
-      ).obs;
+    // 1. Save locally
+    _box.write(_userKey, userProfile.value!.toJson());
 
-      _saveUser();
+    // 2. Save to Firestore
+    try {
+      await _db.collection('users')
+          .doc(userProfile.value!.uid)
+          .set(userProfile.value!.toJson(), SetOptions(merge: true));
+      print("✅ Profile synced to Firestore");
+    } catch (e) {
+      print("❌ Firestore sync error: $e");
     }
   }
 
-  void _saveUser() {
-    _box.write(_userKey, userProfile.value.toJson());
-  }
+  RxBool isLoading = false.obs;
 
+  Future<void> fetchUserProfile(String uid) async {
+    try{
+      isLoading.value = true;
+      DocumentSnapshot doc = await _db.collection('users').doc(uid).get();
+      if(doc.exists){
+        userProfile.value = UserProfile.fromJson(doc.data() as Map<String,dynamic>);
+        //also save locally for offline access
+        _box.write('user_profile', userProfile.value!.toJson());
+      }
+    } catch(e){
+      print("Error fetching profile: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
   // =========================
   // BADGES (PERSISTED)
   // =========================
@@ -126,73 +161,84 @@ class ProfileController extends GetxController {
     addProgress(10); // 🔧 adjust freely
   }
 
-  // =========================
+// =========================
   // PROGRESS SYSTEM
   // =========================
-
   void addProgress(int amount) {
-    final current = userProfile.value.progress;
-    final updated = (current + amount).clamp(0, 100);
+    final profile = userProfile.value;
+    if (profile == null) return;
 
-    userProfile.value =
-        userProfile.value.copyWith(progress: updated);
+    final current = userProfile.value!.progress; // Added !
+    final updated = (current + amount).clamp(0, 100);
+    userProfile.value = profile.copyWith(progress: updated);
     _saveUser();
   }
 
   // =========================
   // AVATAR
   // =========================
-
   void selectPresetAvatar(String path) {
-    userProfile.value =
-        userProfile.value.copyWith(avatarPath: path);
+    if (userProfile.value == null) return;
+    userProfile.value = userProfile.value!.copyWith(avatarPath: path);
     _saveUser();
   }
 
   Future<void> pickAvatarFromGallery() async {
-    final image =
-        await _picker.pickImage(source: ImageSource.gallery);
+    if (userProfile.value == null) return;
+
+    final image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      userProfile.value =
-          userProfile.value.copyWith(avatarPath: image.path);
-      _saveUser();
+      try{
+        String downloadUrl = await _uploadImage(image.path);
+        userProfile.value = userProfile.value!.copyWith(avatarPath: downloadUrl);
+        
+        await _saveUser();
+        Get.snackbar("Success","Profile picture updated!");
+      } catch (e) {
+        Get.snackbar("Error","Failed to upload image: $e");
+      }
     }
   }
 
-  Future<void> pickAvatarFromCamera() async {
-    final image =
-        await _picker.pickImage(source: ImageSource.camera);
+   Future<void> pickAvatarFromCamera() async {
+    if (userProfile.value == null) return;
 
+    final image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      userProfile.value =
-          userProfile.value.copyWith(avatarPath: image.path);
-      _saveUser();
+      try{
+        String downloadUrl = await _uploadImage(image.path);
+        userProfile.value = userProfile.value!.copyWith(avatarPath: downloadUrl);
+        
+        await _saveUser();
+        Get.snackbar("Success","Profile picture updated!");
+      } catch (e) {
+        Get.snackbar("Error","Failed to upload image: $e");
+      }
     }
   }
 
   // =========================
   // PROFILE EDIT
   // =========================
-
   void updateName(String newName) {
-    userProfile.value =
-        userProfile.value.copyWith(name: newName);
+    if (userProfile.value == null) return;
+    userProfile.value = userProfile.value!.copyWith(name: newName);
     _saveUser();
   }
 
   void updateNationality(String newNationality) {
-    userProfile.value =
-        userProfile.value.copyWith(nationality: newNationality);
+    if (userProfile.value == null) return;
+    userProfile.value = userProfile.value!.copyWith(nationality: newNationality);
     _saveUser();
   }
 
   // =========================
   // LEVEL
   // =========================
-
   String get levelTitle {
-    final progress = userProfile.value.progress;
+    if (userProfile.value == null) return 'Guest';
+    final progress = userProfile.value!.progress;
 
     if (progress >= 75) return 'Master';
     if (progress >= 50) return 'Historian';

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:historywalk/features/auth/controller/auth_controller.dart';
-import 'package:historywalk/navigation_menu.dart';
 import 'package:historywalk/common/styles/spacing_styles.dart';
+import 'package:historywalk/features/routes/screens/routes_screen.dart';
 import 'package:historywalk/utils/constants/text_strings.dart';
 import 'package:historywalk/utils/constants/sizes.dart';
 import 'package:historywalk/features/auth/screens/register/register_screen.dart';
+import '../../controller/login_controller.dart';
+import '../../../../navigation_menu.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,7 +19,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final AuthController authController = Get.find<AuthController>();
-
+  final LoginController controller = Get.find<LoginController>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -32,10 +35,14 @@ class _LoginScreenState extends State<LoginScreen> {
   void _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    await authController.login(
+    bool success = await authController.login(
       emailController.text.trim(),
       passwordController.text.trim(),
     );
+
+    if(success){
+      Get.offAll(()=>const NavigationMenu());
+    }
   }
 
   @override
@@ -77,14 +84,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: AppSizes.spaceBtwItems),
 
                     // Password
-                    TextFormField(
+                    Obx(()=>TextFormField(
                       controller: passwordController,
-                      decoration: const InputDecoration(
+                      obscureText: !controller.isPasswordVisible.value,
+                      decoration: InputDecoration(
                         prefixIcon: Icon(Icons.password_outlined),
                         labelText: "Password",
-                        suffixIcon: Icon(Icons.remove_red_eye_rounded),
+                        suffixIcon: IconButton(
+                          icon: Icon(controller.isPasswordVisible.value ? Icons.visibility_outlined : Icons.visibility_off_outlined), 
+                         onPressed: controller.toggleVisibility,),
                       ),
-                      obscureText: true,
+                    
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return "Password is required";
@@ -95,6 +105,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
+                    ),
+                
                     const SizedBox(height: AppSizes.spaceBtwItems / 2),
 
                     // Remember Me & Forget Password
