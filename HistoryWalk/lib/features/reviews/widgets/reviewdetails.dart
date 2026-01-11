@@ -3,7 +3,7 @@ import 'package:historywalk/utils/theme/extensions/reviewtile_theme.dart';
 import '../models/review_model.dart';
 
 class ReviewDetails extends StatelessWidget {
-  final Review review; // Assuming you have a model class
+  final ReviewModel review; // Assuming you have a model class
 
   const ReviewDetails({
     Key? key,

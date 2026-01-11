@@ -103,6 +103,99 @@ Future<void> seedDatabase() async {
       print("✅ Updated Route: ${route['id']}");
     }
 
+// --- 3. DEFINE REVIEWS ---
+    List<Map<String, dynamic>> reviewsData = [
+      // Reviews for "The Ancient Heart" (ancient_athens)
+      {
+        "id": "rev_1",
+        "routeId": "ancient_athens",
+        "userId": "user_alpha",
+        "userName": "Marcus Aurelius",
+        "rating": 5.0,
+        "text": "An incredible journey through time. Standing at the Parthenon at sunrise was a spiritual experience. The app's history content is spot on!",
+        "images": ["https://upload.wikimedia.org/wikipedia/commons/e/e6/Classic_view_of_Acropolis.jpg"],
+        "createdAt": Timestamp.now(),
+      },
+      {
+        "id": "rev_2",
+        "routeId": "ancient_athens",
+        "userId": "user_beta",
+        "userName": "Sophia G.",
+        "rating": 4.0,
+        "text": "Great walk! The Ancient Agora section was very detailed. It's a bit of a climb to the Acropolis, so wear good shoes.",
+        "images": ["https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/The_Acropolis_of_Athens_as_seen_from_the_Pnyx_in_October_2025.jpg/960px-The_Acropolis_of_Athens_as_seen_from_the_Pnyx_in_October_2025.jpg"],
+        "createdAt": Timestamp.now(),
+      },
+      {
+        "id": "rev_3",
+        "routeId": "ancient_athens",
+        "userId": "user_gamma",
+        "userName": "Nikolas P.",
+        "rating": 5.0,
+        "text": "I've lived in Athens for years and never knew the details about Kerameikos. This route turned a Sunday walk into a history lesson.",
+        "images": ["https://www.grayline.com/wp-content/uploads/2025/03/Gray-Line-Athens-Cover-Photo-scaled.jpg"],
+        "createdAt": Timestamp.now(),
+      },
+      {
+        "id": "rev_4",
+        "routeId": "ancient_athens",
+        "userId": "user_delta",
+        "userName": "Elena_Travels",
+        "rating": 3.5,
+        "text": "Beautiful sites, but very crowded near the Parthenon. The app guided me perfectly through the side streets to avoid some of the heat.",
+        "images": ["https://upload.wikimedia.org/wikipedia/commons/c/c4/Akropolis_by_Leo_von_Klenze.jpg"],
+        "createdAt": Timestamp.now(),
+      },
+
+      // Reviews for "Byzantine Echoes" (byzantine_trail)
+      {
+        "id": "rev_5",
+        "routeId": "byzantine_trail",
+        "userId": "user_epsilon",
+        "userName": "John Doe",
+        "rating": 5.0,
+        "text": "The Daphni Monastery mosaics are breathtaking. This route is a must for anyone interested in medieval art. Very peaceful compared to the city center.",
+        "images": ["https://www.greece-is.com/wp-content/uploads/2024/09/shutterstock_2144161825.jpg"],
+        "createdAt": Timestamp.now(),
+      },
+      {
+        "id": "rev_6",
+        "routeId": "byzantine_trail",
+        "userId": "user_zeta",
+        "userName": "Maria K.",
+        "rating": 4.5,
+        "text": "Kapnikarea is such a gem in the middle of the shopping district. I loved the contrast between the old church and the modern city.",
+        "images": ["https://images.unsplash.com/photo-1503152394-c571994fd383?q=80&w=400"],
+        "createdAt": Timestamp.now(),
+      },
+      {
+        "id": "rev_7",
+        "routeId": "byzantine_trail",
+        "userId": "user_theta",
+        "userName": "HistoryBuff99",
+        "rating": 5.0,
+        "text": "Kaisariani Monastery was the highlight. The natural springs and the quiet atmosphere made the Medium difficulty walk totally worth it.",
+        "images": ["https://whyathens.com/wp-content/uploads/2019/03/Byzantine-Churches-Athens-Ermou-Kapnikarea-I-1024x683.jpg"],
+        "createdAt": Timestamp.now(),
+      },
+      {
+        "id": "rev_8",
+        "routeId": "byzantine_trail",
+        "userId": "user_iota",
+        "userName": "Alex Smith",
+        "rating": 4.0,
+        "text": "Interesting route, although the travel between the monasteries takes some time. The 'Echoes' theme is very fitting.",
+        "images": [],
+        "createdAt": Timestamp.now(),
+      },
+    ];
+
+    // --- 4. EXECUTE UPLOAD (Add this to your upload loop) ---
+    for (var review in reviewsData) {
+      await firestore.collection('reviews').doc(review['id']).set(review);
+      print("✅ Seeded Review: ${review['id']}");
+    }
+
     print("🎉 Database successfully updated with multi-line history!");
 
   } catch (e) {

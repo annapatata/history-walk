@@ -10,81 +10,39 @@ import 'reviews_screen.dart';
 import '../../map/screens/map_screen.dart';
 import '../../map/controller/map_controller.dart';
 import 'package:get/get.dart';
-
-final List<Review> dummyReviews = [
-  Review(
-    id: '1',
-    userName: 'Marcus A.',
-    rating: 4.0,
-    text: 'what happens in the Roman Agora stays in the Roman Agora. Great tour!',
-  ),
-  Review(
-    id: '2',
-    userName: 'Cleopatra',
-    rating: 5.0,
-    text: 'Absolutely stunning views. The history really comes alive here.',
-  ),
-  Review(
-    id: '3',
-    userName: 'Julius C.',
-    rating: 3.0,
-    text: 'I came, I saw, I walked a lot. Good exercise but bring water.',
-  ),
-  Review(
-    id: '4',
-    userName: 'Julius Caa.',
-    rating: 3.0,
-    text: 'I came.',
-    images: ['https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg']
-  ),
-  Review(
-    id: '5',
-    userName: 'Julius Coo.',
-    rating: 3.0,
-    text: 'I came, I saw.',
-    images: ['https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg', 'https://www.shutterstock.com/shutterstock/photos/2286554497/display_1500/stock-photo-random-pictures-cute-and-funny-2286554497.jpg', 'https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg', 'https://www.shutterstock.com/shutterstock/photos/2286554497/display_1500/stock-photo-random-pictures-cute-and-funny-2286554497.jpg']
-  ),
-];
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../reviews/controller/review_controller.dart';
 
 class RouteDetails extends StatelessWidget {
-  RouteDetails({
-    required this.route,
-    super.key
-  });
-
-  static int reviews = dummyReviews.length;
-
+  RouteDetails({required this.route, super.key});
   final RouteModel route;
-
-  final allImages = dummyReviews
-    .where((review) => review.images != null && review.images!.isNotEmpty)
-    .expand((review) => review.images!)
-    .toList();
+  final reviewController = Get.put(ReviewController());
 
   @override
   Widget build(BuildContext context) {
+    reviewController.fetchReviews(route.id);
+
     return Scaffold(
       bottomNavigationBar: Container(
-      padding: const EdgeInsets.all(16.0),
-      color: Colors.transparent, // Or your background color
-      child: PrimaryActionButton(
-        label: 'START ROUTE',
-        onPressed: () async {
-  final MapController mapController = Get.find();
-  
-  // 1. Trigger the fetch
-  // 2. IMPORTANT: Use 'await' so we don't move to the next screen until data is here
-  await mapController.loadRouteStops(route); 
-  
-  // 3. Now navigate
-  Get.to(() => MapScreen(selectedRoute: route));
+        padding: const EdgeInsets.all(16.0),
+        color: Colors.transparent, // Or your background color
+        child: PrimaryActionButton(
+          label: 'START ROUTE',
+          onPressed: () async {
+            final MapController mapController = Get.find();
 
-        },
-        backgroundcolour: AppColors.searchBarDark,
+            // 1. Trigger the fetch
+            // 2. IMPORTANT: Use 'await' so we don't move to the next screen until data is here
+            await mapController.loadRouteStops(route);
+
+            // 3. Now navigate
+            Get.to(() => MapScreen(selectedRoute: route));
+          },
+          backgroundcolour: AppColors.searchBarDark,
+        ),
       ),
-    ),
 
-      body: Stack (
+      body: Stack(
         children: [
           SectionScreenLayout(
             title: route.name,
@@ -94,7 +52,10 @@ class RouteDetails extends StatelessWidget {
               children: [
                 // Route description with character on left and speech bubble on right
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 20,
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -116,9 +77,14 @@ class RouteDetails extends StatelessWidget {
                               topRight: Radius.circular(40),
                               bottomRight: Radius.circular(40),
                               topLeft: Radius.circular(40),
-                              bottomLeft: Radius.circular(4), // Sharp corner for bubble tail effect
+                              bottomLeft: Radius.circular(
+                                4,
+                              ), // Sharp corner for bubble tail effect
                             ),
-                            border: Border.all(color: AppColors.searchBarLight, width: 2),
+                            border: Border.all(
+                              color: AppColors.searchBarLight,
+                              width: 2,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.1),
@@ -129,10 +95,8 @@ class RouteDetails extends StatelessWidget {
                           ),
                           child: Text(
                             route.description,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white,
-                                  height: 1.4,
-                                ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: Colors.white, height: 1.4),
                           ),
                         ),
                       ),
@@ -158,20 +122,30 @@ class RouteDetails extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                Text(
-                  'Photo Gallery (${route.imageUrl.length})',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+
+                
+                Obx((){
+                  final allImages = reviewController.reviews
+                        .expand((r) => r.images ?? [])
+                        .toList();
+                
+                  if (allImages.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    children: [
+
+                    Text(
+                  'Photo Gallery (${allImages.length})',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
 
-                const SizedBox(height: 8),
-
-                if (allImages.isNotEmpty) ...[
-                  SizedBox(
+                const SizedBox(height: 16),
+                   SizedBox(
                     height: 110,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: allImages.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 8),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 8),
                       itemBuilder: (context, index) {
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(8),
@@ -184,12 +158,19 @@ class RouteDetails extends StatelessWidget {
                       },
                     ),
                   ),
-                  const SizedBox(height: 16),
-                ],
+                    ],
+                  );
+                }),
 
                 const SizedBox(height: 16),
 
-                Container(
+              Obx((){
+                if (reviewController.isLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return Column(
+                    children: [
+                      Container(
                   height: 30,
                   color: AppColors.stars,
                   child: Padding(
@@ -197,20 +178,20 @@ class RouteDetails extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Reviews ($reviews)',
+                        'Reviews (${reviewController.reviews.length})',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
                 ),
+                ...reviewController.reviews.take(3).map((r)=>
+                ReviewTile(review:r,onTap:(){})),
+
 
                 const SizedBox(height: 8),
 
-                ReviewTile(review: dummyReviews[0], onTap: () {}),
-                ReviewTile(review: dummyReviews[1], onTap: () {}),
-                ReviewTile(review: dummyReviews[2], onTap: () {}),
 
-                if(dummyReviews.length > 3)
+                if (reviewController.reviews.length > 3)
                   TextButton(
                     onPressed: () {
                       Navigator.push(
@@ -225,9 +206,12 @@ class RouteDetails extends StatelessWidget {
 
                 const SizedBox(height: 20),
               ],
+                  );
+              }),
+              ],
             ),
-          ),
-          
+          ),   
+
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             left: 10,
@@ -238,8 +222,9 @@ class RouteDetails extends StatelessWidget {
               },
             ),
           ),
+          
         ],
-      )
-      );
+      ),
+    );
   }
 }

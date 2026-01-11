@@ -4,7 +4,7 @@ import '../models/review_model.dart';
 import 'reviewdetails.dart';
 
 class ReviewTile extends StatelessWidget {
-  final Review review; // Assuming you have a model class
+  final ReviewModel review; 
   final VoidCallback onTap;
 
   const ReviewTile({

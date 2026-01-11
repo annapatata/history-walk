@@ -12,6 +12,7 @@ class AuthController extends GetxController {
 
   /// Ο τρέχων χρήστης (null αν δεν είναι logged in)
   Rxn<User> firebaseUser = Rxn<User>();
+  Rxn<User> userProfile = Rxn<User>();
 
   @override
   void onInit() {
@@ -20,6 +21,7 @@ class AuthController extends GetxController {
     firebaseUser.bindStream(_auth.authStateChanges());
   }
 
+  
   RxBool isLoading = false.obs;
 
   /// Register με email & password & name
