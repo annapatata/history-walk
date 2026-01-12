@@ -12,23 +12,38 @@ import '../../map/controller/map_controller.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../reviews/controller/review_controller.dart';
+import '../../profile/controller/profile_controller.dart';
 
 class RouteDetails extends StatelessWidget {
   RouteDetails({required this.route, super.key});
   final RouteModel route;
   final reviewController = Get.put(ReviewController());
+  final ProfileController profileController = Get.find();
 
   @override
   Widget build(BuildContext context) {
     reviewController.fetchReviews(route.id);
+    final bool isCompleted = profileController.isRouteCompleted(route.id);
+    final bool isReviewed = profileController.userProfile.value?.reviewedRoutes.contains(route.id)??false;
 
+    String buttonLabel = 'START ROUTE';
+    if(isCompleted){
+      buttonLabel = isReviewed ? 'EDIT YOUR REVIEW' : 'WRITE A REVIEW';
+    }
     return Scaffold(
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16.0),
         color: Colors.transparent, // Or your background color
         child: PrimaryActionButton(
-          label: 'START ROUTE',
+          label: buttonLabel,
           onPressed: () async {
+
+            if(isCompleted){
+              showDialog(
+                context:context,
+                builder: (context) => WriteReviewModal(routeId: route.id,isEditing: isReviewed),
+              );
+            } else {
             final MapController mapController = Get.find();
 
             // 1. Trigger the fetch
@@ -37,8 +52,9 @@ class RouteDetails extends StatelessWidget {
 
             // 3. Now navigate
             Get.to(() => MapScreen(selectedRoute: route));
+          }
           },
-          backgroundcolour: AppColors.searchBarDark,
+          backgroundcolour: isCompleted ? AppColors.stars : AppColors.searchBarDark,
         ),
       ),
 
@@ -104,26 +120,7 @@ class RouteDetails extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Write a Review button - only show if user completed the route
-                if (route.isCompleted)
-                  PrimaryActionButton(
-                    label: 'Write a Review',
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return const WriteReviewModal();
-                        },
-                      );
-                    },
-                    backgroundcolour: AppColors.stars,
-                  ),
-
-                const SizedBox(height: 16),
-
-
-                
+             
                 Obx((){
                   final allImages = reviewController.reviews
                         .expand((r) => r.images ?? [])

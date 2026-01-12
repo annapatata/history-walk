@@ -245,4 +245,10 @@ class ProfileController extends GetxController {
     if (progress >= 25) return 'Explorer';
     return 'Newcomer';
   }
+
+  // Helper method to check the completed routes so that write a review is visible and tick on the routes page
+  bool isRouteCompleted(String routeId) {
+    return userProfile.value?.completedRoutes.contains(routeId) ?? false;
+  }
+
 }

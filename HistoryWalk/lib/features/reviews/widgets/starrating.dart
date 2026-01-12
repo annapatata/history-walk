@@ -2,14 +2,21 @@ import "package:flutter/material.dart";
 
 class StarRatingInput extends StatefulWidget {
   final Function(int) onRatingChanged;
-  const StarRatingInput({super.key, required this.onRatingChanged});
+  final int initialRating;
+  const StarRatingInput({super.key, required this.onRatingChanged,required this.initialRating});
 
   @override
   State<StarRatingInput> createState() => _StarRatingInputState();
 }
 
 class _StarRatingInputState extends State<StarRatingInput> {
-  int _currentRating = 0;
+  late int _currentRating;
+
+  @override
+  void initState(){
+    super.initState();
+    _currentRating= widget.initialRating;
+  }
 
   @override
   Widget build(BuildContext context) {

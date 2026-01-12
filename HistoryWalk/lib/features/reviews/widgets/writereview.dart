@@ -1,25 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:historywalk/features/profile/controller/profile_controller.dart';
+import 'package:historywalk/features/reviews/controller/review_controller.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
 import 'package:historywalk/common/widgets/primaryactionbutton.dart';
 import 'package:image_picker/image_picker.dart';
 import 'starrating.dart';
+import 'package:get/get.dart';
+import '../models/review_model.dart';
 
 class WriteReviewModal extends StatefulWidget {
-  const WriteReviewModal({super.key});
+  final String routeId;
+  final bool isEditing;
+  const WriteReviewModal({super.key,required this.routeId, this.isEditing=false});
+  
 
   @override
   State<WriteReviewModal> createState() => _WriteReviewModalState();
 }
 
 class _WriteReviewModalState extends State<WriteReviewModal> {
-  int _userRating = 0;
-  final TextEditingController _textController = TextEditingController();
+  //we use late because we will initialize these in initState
+  late int _userRating = 0;
+  late TextEditingController _textController = TextEditingController();
 
-  void _handleSubmit() {
-    final reviewText = _textController.text;
-    // You can now send _userRating and reviewText to your backend/database
-    print("Rating: $_userRating, Review: $reviewText");
-    Navigator.pop(context);
+  final ReviewController reviewController = Get.find();
+  final ProfileController profileController = Get.find();
+
+  @override
+  void initState(){
+    super.initState();
+    _userRating=0;
+    _textController=TextEditingController();
+
+    //autofill
+    if(widget.isEditing){
+      final userId = profileController.userProfile.value?.uid;
+      if(userId!=null){
+        final existing = reviewController.getExistingReview(userId,widget.routeId);
+        if(existing!=null){
+          _userRating = existing.rating.toInt();
+          _textController.text = existing.text;
+        }
+      }
+    }
+  }
+  @override 
+  void dispose(){
+    _textController.dispose();
+    super.dispose();
+  }
+  void _handleSubmit() async {
+    final reviewText = _textController.text.trim();
+    final user = profileController.userProfile.value;
+
+    if(_userRating==0) {
+      Get.snackbar("Rating Required", "Please select at least one star");
+      return;
+    }
+
+    if(user==null){
+      Get.snackbar("You must be logged in to review","log in");
+      return;
+    }
+    //create the ReviewModel object
+    final newReview = ReviewModel(
+      id:'',
+      userName: user.name,
+      userId : user.uid,
+      routeId: widget.routeId,
+      rating: _userRating.toDouble(),
+      text: reviewText,
+      createdAt: DateTime.now(),
+      images: [],
+    );
+
+
+    await reviewController.saveOrUpdateReview(newReview,widget.isEditing);
+    if(mounted) Navigator.pop(context);
   }
 
   @override
@@ -39,7 +97,8 @@ class _WriteReviewModalState extends State<WriteReviewModal> {
                 color: Color(0xFFF9C784),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              child: const Text(
+              child:  Text(
+                widget.isEditing ? "Update your review":
                 "How was your walk?",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -51,7 +110,9 @@ class _WriteReviewModalState extends State<WriteReviewModal> {
               child: Column(
                 children: [
                   // Interactive Stars
-                  StarRatingInput(onRatingChanged: (rating) {
+                  StarRatingInput(
+                    initialRating: _userRating,
+                    onRatingChanged: (rating) {
                     _userRating = rating;
                   }),
                   
@@ -73,12 +134,14 @@ class _WriteReviewModalState extends State<WriteReviewModal> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  PrimaryActionButton(
+                Obx(()=> reviewController.isLoading.value
+                ? const CircularProgressIndicator()
+                : PrimaryActionButton(
                     label: 'SUBMIT',
                     onPressed: _handleSubmit,
                     backgroundcolour: const Color(0xFF4E2308),
                   ),
+                ),
                 ],
               ),
             ),

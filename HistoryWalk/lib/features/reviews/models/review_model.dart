@@ -25,11 +25,12 @@ class ReviewModel {
   Map<String, dynamic> toJson() => {
     'id': id,
     'userId': userId,
+    'userName': userName,
     'routeId': routeId,
     'rating': rating,
     'text': text,
     'images': images,
-    'createdAt': createdAt?.toIso8601String(),
+    'createdAt': FieldValue.serverTimestamp(),
   };
 
   factory ReviewModel.fromSnapshot(Map<String, dynamic> data, String id) {

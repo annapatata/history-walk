@@ -8,6 +8,7 @@ class UserProfile {
   final int level;
   final int progress;
   final List<String> completedRoutes;
+  final List<String> reviewedRoutes;
 
   UserProfile({
     required this.name,
@@ -19,6 +20,7 @@ class UserProfile {
     required this.uid,
     required this.email,
     this.completedRoutes = const [],
+    this.reviewedRoutes = const [],
   });
 
   // THIS IS THE METHOD THAT IS MISSING
@@ -30,6 +32,7 @@ class UserProfile {
     int? level,
     int? progress,
     List<String>? completedRoutes,
+    List<String>? reviewedRoutes,
   }) {
     return UserProfile(
       uid: this.uid, // UID should never change
@@ -41,6 +44,7 @@ class UserProfile {
       level: level ?? this.level,
       progress: progress ?? this.progress,
       completedRoutes: completedRoutes ?? this.completedRoutes,
+      reviewedRoutes: reviewedRoutes ?? this.reviewedRoutes,
     );
   }
 
@@ -59,6 +63,7 @@ class UserProfile {
       'level': level,
       'progress': progress,
       'completedRoutes': completedRoutes,
+      'reviewedRoutes': reviewedRoutes
     };
   }
 
@@ -72,7 +77,8 @@ class UserProfile {
       firstLoginDate: DateTime.parse(json['firstLoginDate']),
       level: json['level'],
       progress: json['progress'],
-      completedRoutes: List<String>.from(json['completedRoutes'] ?? [])
+      completedRoutes: List<String>.from(json['completedRoutes'] ?? []),
+      reviewedRoutes: List<String>.from(json['reviewedRoutes'] ?? [])
     );
   }
 }

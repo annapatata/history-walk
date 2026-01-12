@@ -22,4 +22,41 @@ class ReviewController extends GetxController {
          isLoading.value = false;
        });
   }
+
+ReviewModel? getExistingReview(String userId, String routeId) {
+  return reviews.firstWhereOrNull(
+    (r) => r.userId == userId && r.routeId == routeId
+  );
+}
+
+Future<void> saveOrUpdateReview(ReviewModel review, bool isEditing) async{
+  try{
+    isLoading.value = true;
+    if(isEditing){
+      final query = await _db.collection('reviews')
+        .where('userId',isEqualTo: review.userId)
+        .where('routeId',isEqualTo: review.routeId)
+        .get();
+
+      if (query.docs.isNotEmpty){
+        //update the existing review
+        await query.docs.first.reference.update(review.toJson());
+      }
+    } else {
+      // 3. Create new review
+      await _db.collection('reviews').add(review.toJson());
+      
+      // 4. Update the user's ReviewedRoutes list in Firestore
+      await _db.collection('users').doc(review.userId).update({
+        'reviewedRoutes': FieldValue.arrayUnion([review.routeId])
+      });
+    }
+    
+    Get.snackbar("Success", "Review saved!");
+  } catch (e) {
+    Get.snackbar("Error", e.toString());
+  } finally {
+    isLoading.value = false;
+  }
+}
 }
