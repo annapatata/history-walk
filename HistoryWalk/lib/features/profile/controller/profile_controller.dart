@@ -9,16 +9,13 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileController extends GetxController {
-
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final ImagePicker _picker = ImagePicker();
   final GetStorage _box = GetStorage();
   final FirebaseStorage _storage = FirebaseStorage.instance;
-  static const String _userKey = 'user_profile';
-  static const String _badgesKey = 'user_badges';
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  //use rxn so it can be null until data arrives
+  // use Rxn so it can be null until data arrives
   Rxn<UserProfile> userProfile = Rxn<UserProfile>();
 
   // 🏅 Badges
@@ -31,49 +28,28 @@ class ProfileController extends GetxController {
     'assets/avatars/avatar_3.png',
   ];
 
+  // =========================
+  // Keys for local storage per user
+  // =========================
+  String get _userKey => 'user_profile';
+  String get _badgesKey => 'user_badges_${userProfile.value?.uid ?? ""}';
+
   @override
   void onInit() {
     super.onInit();
-    _initBadges();
-
-  final currentUser = FirebaseAuth.instance.currentUser;
-  if(currentUser!=null){
-  fetchUserProfile(currentUser.uid);
-  }else {
-    print("cannot fetch profile, no user logged in");
+    // Αν υπάρχει ήδη logged-in user, κάνουμε fetch
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      fetchUserProfile(currentUser.uid);
+    } else {
+      print("cannot fetch profile, no user logged in");
+      _initBadges(); // αρχικοποίηση κλειδωμένων badges
+    }
   }
-  }
-
-  Future<String> _uploadImage(String filePath) async {
-  File file = File(filePath);
-  String fileName = 'avatars/${userProfile.value!.uid}';
-  
-  try {
-    // 1. Get reference to storage
-    final storageRef = FirebaseStorage.instance.ref();
-    
-    // 2. Create the child reference correctly
-    final avatarRef = storageRef.child(fileName);
-    
-    // 3. Upload the file
-    // Note: Use putFile(file) for Mobile. For Web, use putData()
-    UploadTask uploadTask = avatarRef.putFile(file);
-    
-    // 4. Wait for completion and get URL
-    TaskSnapshot snapshot = await uploadTask;
-    String downloadUrl = await snapshot.ref.getDownloadURL();
-    
-    return downloadUrl;
-  } catch (e) {
-    print("Storage Error: $e");
-    rethrow;
-  }
-}
 
   // =========================
   // USER PROFILE
   // =========================
-
   Future<void> _saveUser() async {
     if (userProfile.value == null) return;
 
@@ -82,7 +58,8 @@ class ProfileController extends GetxController {
 
     // 2. Save to Firestore
     try {
-      await _db.collection('users')
+      await _db
+          .collection('users')
           .doc(userProfile.value!.uid)
           .set(userProfile.value!.toJson(), SetOptions(merge: true));
       print("✅ Profile synced to Firestore");
@@ -94,24 +71,25 @@ class ProfileController extends GetxController {
   RxBool isLoading = false.obs;
 
   Future<void> fetchUserProfile(String uid) async {
-    try{
+    try {
       isLoading.value = true;
       DocumentSnapshot doc = await _db.collection('users').doc(uid).get();
-      if(doc.exists){
-        userProfile.value = UserProfile.fromJson(doc.data() as Map<String,dynamic>);
-        //also save locally for offline access
-        _box.write('user_profile', userProfile.value!.toJson());
+      if (doc.exists) {
+        userProfile.value = UserProfile.fromJson(doc.data() as Map<String, dynamic>);
+        // save locally
+        _box.write(_userKey, userProfile.value!.toJson());
       }
-    } catch(e){
+    } catch (e) {
       print("Error fetching profile: $e");
     } finally {
       isLoading.value = false;
+      _initBadges(); // initialize badges after userProfile is loaded
     }
   }
-  // =========================
-  // BADGES (PERSISTED)
-  // =========================
 
+  // =========================
+  // BADGES (PERSISTED, per user)
+  // =========================
   void _initBadges() {
     final stored = _box.read(_badgesKey) ?? {};
 
@@ -124,15 +102,15 @@ class ProfileController extends GetxController {
         unlocked: false,
       ),
       Badge(
-        id: 'athens_explorer',
+        id: 'route_ancient_athens',
         title: 'Athens Explorer',
         description: 'Explore Athens',
         iconPath: 'assets/badges/athens_explorer.jpg',
         unlocked: false,
       ),
       Badge(
-        id: 'profile_complete',
-        title: 'Profile Ready',
+        id: 'route_byzantine_trail',
+        title: 'Byzantine Echoes',
         description: 'Complete your profile',
         iconPath: 'assets/badges/profile_complete.jpg',
         unlocked: false,
@@ -147,41 +125,31 @@ class ProfileController extends GetxController {
         return badge;
       }).toList(),
     );
+
+    // Αν δεν υπάρχει local storage για τον χρήστη, ξεκλειδωμένα όλα false
+    if (stored.isEmpty) {
+      badges.assignAll(baseBadges.map((b) => b.copyWith(unlocked: false)).toList());
+      _saveBadges();
+    }
   }
 
   void _saveBadges() {
-    final map = {
-      for (final b in badges) b.id: b.toJson(),
-    };
+    final map = {for (final b in badges) b.id: b.toJson()};
     _box.write(_badgesKey, map);
   }
 
-  // =========================
-  // TEMP DEV BADGE UNLOCK
-  // =========================
-  // ⚠️ TEMPORARY METHOD
-  // Used only for testing badges unlocking via tap
-  void unlockBadgeAndAddProgress(String badgeId) {
-    final index = badges.indexWhere((b) => b.id == badgeId);
-    if (index == -1) return;
-    if (badges[index].unlocked) return;
-
-    // Unlock badge
-    badges[index] = badges[index].copyWith(unlocked: true);
+  void saveBadges() {
     _saveBadges();
-
-    // TEMP: add progress when badge unlocks
-    addProgress(10); // 🔧 adjust freely
   }
 
-// =========================
+  // =========================
   // PROGRESS SYSTEM
   // =========================
   void addProgress(int amount) {
     final profile = userProfile.value;
     if (profile == null) return;
 
-    final current = userProfile.value!.progress; // Added !
+    final current = profile.progress;
     final updated = (current + amount).clamp(0, 100);
     userProfile.value = profile.copyWith(progress: updated);
     _saveUser();
@@ -198,36 +166,47 @@ class ProfileController extends GetxController {
 
   Future<void> pickAvatarFromGallery() async {
     if (userProfile.value == null) return;
-
     final image = await _picker.pickImage(source: ImageSource.gallery);
-
     if (image != null) {
-      try{
+      try {
         String downloadUrl = await _uploadImage(image.path);
         userProfile.value = userProfile.value!.copyWith(avatarPath: downloadUrl);
-        
         await _saveUser();
-        Get.snackbar("Success","Profile picture updated!");
+        Get.snackbar("Success", "Profile picture updated!");
       } catch (e) {
-        Get.snackbar("Error","Failed to upload image: $e");
+        Get.snackbar("Error", "Failed to upload image: $e");
       }
     }
   }
 
-   Future<void> pickAvatarFromCamera() async {
+  Future<void> pickAvatarFromCamera() async {
     if (userProfile.value == null) return;
-
     final image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      try{
+      try {
         String downloadUrl = await _uploadImage(image.path);
         userProfile.value = userProfile.value!.copyWith(avatarPath: downloadUrl);
-        
         await _saveUser();
-        Get.snackbar("Success","Profile picture updated!");
+        Get.snackbar("Success", "Profile picture updated!");
       } catch (e) {
-        Get.snackbar("Error","Failed to upload image: $e");
+        Get.snackbar("Error", "Failed to upload image: $e");
       }
+    }
+  }
+
+  Future<String> _uploadImage(String filePath) async {
+    File file = File(filePath);
+    String fileName = 'avatars/${userProfile.value!.uid}';
+    try {
+      final storageRef = FirebaseStorage.instance.ref();
+      final avatarRef = storageRef.child(fileName);
+      UploadTask uploadTask = avatarRef.putFile(file);
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print("Storage Error: $e");
+      rethrow;
     }
   }
 
@@ -259,9 +238,10 @@ class ProfileController extends GetxController {
     return 'Newcomer';
   }
 
-  // Helper method to check the completed routes so that write a review is visible and tick on the routes page
+  // =========================
+  // ROUTE COMPLETION HELPER
+  // =========================
   bool isRouteCompleted(String routeId) {
     return userProfile.value?.completedRoutes.contains(routeId) ?? false;
   }
-
 }

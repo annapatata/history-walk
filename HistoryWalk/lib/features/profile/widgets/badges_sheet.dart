@@ -61,79 +61,66 @@ class BadgesSheet extends StatelessWidget {
                     itemBuilder: (_, index) {
                       final badge = controller.badges[index];
 
-                      return GestureDetector(
-                        onTap: () {
-                          // ⚠️ TEMP DEV ONLY
-                          // Tap badge to unlock + add progress
-                          controller.unlockBadgeAndAddProgress(badge.id);
-                        },
-                        child: Column(
-                          children: [
-                            AnimatedScale(
-                              scale: badge.unlocked ? 1.0 : 0.95,
-                              duration:
-                                  const Duration(milliseconds: 300),
-                              curve: Curves.easeOut,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  // Badge image
-                                  ClipRRect(
-                                    borderRadius:
-                                        BorderRadius.circular(16),
-                                    child: Image.asset(
-                                      badge.iconPath,
-                                      width: 72,
-                                      height: 72,
-                                      fit: BoxFit.cover,
-                                    ),
+                      return Column(
+                        children: [
+                          AnimatedScale(
+                            scale: badge.unlocked ? 1.0 : 0.95,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Badge image
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.asset(
+                                    badge.iconPath,
+                                    width: 72,
+                                    height: 72,
+                                    fit: BoxFit.cover,
                                   ),
+                                ),
 
-                                  // Locked overlay
-                                  if (!badge.unlocked)
-                                    Positioned.fill(
-                                      child: ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(16),
-                                        child: BackdropFilter(
-                                          filter: ImageFilter.blur(
-                                            sigmaX: 4,
-                                            sigmaY: 4,
-                                          ),
-                                          child: Container(
-                                            color: Colors.black
-                                                .withOpacity(0.25),
-                                          ),
+                                // Locked overlay
+                                if (!badge.unlocked)
+                                  Positioned.fill(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: BackdropFilter(
+                                        filter: ImageFilter.blur(
+                                          sigmaX: 4,
+                                          sigmaY: 4,
+                                        ),
+                                        child: Container(
+                                          color: Colors.black.withOpacity(0.25),
                                         ),
                                       ),
                                     ),
+                                  ),
 
-                                  // Lock icon
-                                  if (!badge.unlocked)
-                                    const Icon(
-                                      Icons.lock,
-                                      size: 28,
-                                      color: Colors.white,
-                                    ),
-                                ],
-                              ),
+                                // Lock icon
+                                if (!badge.unlocked)
+                                  const Icon(
+                                    Icons.lock,
+                                    size: 28,
+                                    color: Colors.white,
+                                  ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
+                          ),
+                          const SizedBox(height: 8),
 
-                            // Badge title
-                            Text(
-                              badge.title,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: badge.unlocked
-                                    ? Colors.black
-                                    : Colors.grey,
-                              ),
+                          // Badge title
+                          Text(
+                            badge.title,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: badge.unlocked ? Colors.black : Colors.grey,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       );
                     },
                   ),

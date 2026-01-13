@@ -7,11 +7,13 @@ import 'package:historywalk/navigation_menu.dart';
 // Assuming your model paths are correct
 import '../../routes/models/stopmodel.dart'; 
 import '../../routes/models/route_model.dart';
-
+import '../../profile/controller/badge_controller.dart';
 
 class MapController extends GetxController {
   final FlutterTts flutterTts = FlutterTts();
   
+  final BadgeController badgeController = Get.find();
+
   // Observables
   var currentParagraphIndex = 0.obs;
   var isPaused = false.obs;
@@ -165,36 +167,52 @@ class MapController extends GetxController {
 
   Future<void> finalizeRoute() async {
     await flutterTts.stop();
-    if(Get.isBottomSheetOpen ?? false) Get.back();
+    if (Get.isBottomSheetOpen ?? false) Get.back();
 
     final profileCtrl = Get.find<ProfileController>();
-    final String? routeId = activeRoute.value?.id;
-    try{
-      isLoading.value = true;
-      String uid = profileCtrl.userProfile.value!.uid;
+    final badgeCtrl = Get.find<BadgeController>();
 
+    final String? routeId = activeRoute.value?.id;
+
+    if (routeId == null) {
+      print("❌ finalizeRoute called without activeRoute");
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+      final String uid = profileCtrl.userProfile.value!.uid;
+
+      // 1️⃣ Αποθήκευση completed route
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
-      'completedRoutes': FieldValue.arrayUnion([routeId]),
+        'completedRoutes': FieldValue.arrayUnion([routeId]),
       });
 
+      // 2️⃣ Refresh profile
       await profileCtrl.fetchUserProfile(uid);
 
+      // 3️⃣ Badge logic
+      badgeCtrl.onRouteCompleted(routeId);
+
+      // 4️⃣ UI
       Get.defaultDialog(
         title: "Route Completed! 🏆",
-      middleText: "You've unlocked new badges.",
-      textConfirm: "Back to Routes",
-      onConfirm: () {
-        clearStops();
-        activeRoute.value = null;
-        Get.offAll(() => const NavigationMenu());
-      },
+        middleText: "You've unlocked new badges.",
+        textConfirm: "Back to Routes",
+        onConfirm: () {
+          clearStops();
+          activeRoute.value = null;
+          Get.offAll(() => const NavigationMenu());
+        },
       );
-    } catch(e){
-      print("error finalizing route: $e");
-    }finally {
-      isLoading.value=false;
+
+    } catch (e) {
+      print("❌ error finalizing route: $e");
+    } finally {
+      isLoading.value = false;
     }
   }
+
 
   void moveToPreviousStop() {
     if (currentStop.value == null) return;
