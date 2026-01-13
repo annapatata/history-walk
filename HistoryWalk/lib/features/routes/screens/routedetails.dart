@@ -22,7 +22,10 @@ class RouteDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
     reviewController.fetchReviews(route.id);
+  });
     final bool isCompleted = profileController.isRouteCompleted(route.id);
     final bool isReviewed = profileController.userProfile.value?.reviewedRoutes.contains(route.id)??false;
 

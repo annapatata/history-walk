@@ -16,6 +16,10 @@ class _StarRatingInputState extends State<StarRatingInput> {
   void initState(){
     super.initState();
     _currentRating= widget.initialRating;
+
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      widget.onRatingChanged(_currentRating);
+    });
   }
 
   @override

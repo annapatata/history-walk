@@ -77,6 +77,18 @@ class _WriteReviewModalState extends State<WriteReviewModal> {
 
 
     await reviewController.saveOrUpdateReview(newReview,widget.isEditing);
+    
+  if (profileController.userProfile.value != null) {
+    var updatedList = List<String>.from(profileController.userProfile.value!.reviewedRoutes);
+    if (!updatedList.contains(widget.routeId)) {
+      updatedList.add(widget.routeId);
+      
+      // Use copyWith to trigger GetX update
+      profileController.userProfile.value = profileController.userProfile.value!.copyWith(
+        reviewedRoutes: updatedList,
+      );
+    }
+  }
     if(mounted) Navigator.pop(context);
   }
 
@@ -85,7 +97,10 @@ class _WriteReviewModalState extends State<WriteReviewModal> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       backgroundColor: const Color(0xFFFFF9EE),
-      child: SingleChildScrollView( // Prevents overflow when keyboard appears
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20,vertical:24),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300), // Prevents overflow when keyboard appears
+        child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -147,6 +162,7 @@ class _WriteReviewModalState extends State<WriteReviewModal> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

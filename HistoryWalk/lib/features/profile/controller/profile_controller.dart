@@ -44,18 +44,31 @@ class ProfileController extends GetxController {
   }
   }
 
-  Future<String> _uploadImage(String localPath) async {
-    File file = File(localPath);
-    //create a unique filename using the userID
-
-    String userId = userProfile.value!.uid;
-    Reference ref = _storage.ref().child('avatars').child('$userId.jpg');
-
-    UploadTask uploadTask = ref.putFile(file);
+  Future<String> _uploadImage(String filePath) async {
+  File file = File(filePath);
+  String fileName = 'avatars/${userProfile.value!.uid}';
+  
+  try {
+    // 1. Get reference to storage
+    final storageRef = FirebaseStorage.instance.ref();
+    
+    // 2. Create the child reference correctly
+    final avatarRef = storageRef.child(fileName);
+    
+    // 3. Upload the file
+    // Note: Use putFile(file) for Mobile. For Web, use putData()
+    UploadTask uploadTask = avatarRef.putFile(file);
+    
+    // 4. Wait for completion and get URL
     TaskSnapshot snapshot = await uploadTask;
-
-    return await snapshot.ref.getDownloadURL();
+    String downloadUrl = await snapshot.ref.getDownloadURL();
+    
+    return downloadUrl;
+  } catch (e) {
+    print("Storage Error: $e");
+    rethrow;
   }
+}
 
   // =========================
   // USER PROFILE

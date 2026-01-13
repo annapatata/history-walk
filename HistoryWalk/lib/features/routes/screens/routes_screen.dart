@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Add this
+import 'package:historywalk/features/reviews/controller/review_controller.dart';
 import '../widgets/route_box.dart';
 import '../models/route_model.dart';
 import 'routedetails.dart';
@@ -66,6 +67,7 @@ class RoutesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ProfileController profileController = Get.find();
+    final ReviewController reviewController = Get.find();
     return SectionScreenLayout(
       title: 'ROUTES',
       body: FutureBuilder<List<RouteModel>>(
@@ -101,12 +103,15 @@ class RoutesScreen extends StatelessWidget {
                 children: [
                   RouteBox(
                     route: route,
-                    onTap: () => Navigator.push(
+                    onTap: () { 
+                      reviewController.fetchReviews(route.id);
+                      Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => RouteDetails(route: route),
                       ),
-                    ),
+                    );
+                    }
                   ),
                   if (finished)
                     const Positioned(

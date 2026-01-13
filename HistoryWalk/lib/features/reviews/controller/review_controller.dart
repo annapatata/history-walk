@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:historywalk/features/profile/controller/profile_controller.dart';
 import '../models/review_model.dart';
 
 class ReviewController extends GetxController {
@@ -57,6 +58,29 @@ Future<void> saveOrUpdateReview(ReviewModel review, bool isEditing) async{
     Get.snackbar("Error", e.toString());
   } finally {
     isLoading.value = false;
+  }
+}
+
+Future<void> deleteReview(String reviewId, String routeId, String userId) async {
+  try {
+    await _db.collection('reviews').doc(reviewId).delete();
+    await _db.collection('users').doc(userId).update({
+      'reviewedRoutes': FieldValue.arrayRemove([routeId])
+    });
+    
+    final  profileController= Get.find<ProfileController>();
+    if(profileController.userProfile.value!=null){
+      List<String> updatedList = List.from(profileController.userProfile.value!.reviewedRoutes);
+      updatedList.remove(routeId);
+      profileController.userProfile.value = profileController.userProfile.value!.copyWith(
+        reviewedRoutes: updatedList,
+      );
+    }
+    
+    Get.back();
+    Get.snackbar("Success", "Review deleted successfully");
+  } catch(e) {
+    Get.snackbar("Error", "Failed to delete review");
   }
 }
 }
