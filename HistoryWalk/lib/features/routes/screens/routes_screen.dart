@@ -67,7 +67,7 @@ class RoutesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ProfileController profileController = Get.find();
-    final ReviewController reviewController = Get.find();
+    final ReviewController reviewController = Get.put(ReviewController());
     return SectionScreenLayout(
       title: 'ROUTES',
       body: FutureBuilder<List<RouteModel>>(
