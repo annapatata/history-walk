@@ -68,7 +68,8 @@ class RoutesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final ProfileController profileController = Get.find();
     final ReviewController reviewController = Get.put(ReviewController());
-    return SectionScreenLayout(
+    return Scaffold(
+    body: SectionScreenLayout(
       title: 'ROUTES',
       body: FutureBuilder<List<RouteModel>>(
         future: getRoutesWithStops(),
@@ -129,6 +130,7 @@ class RoutesScreen extends StatelessWidget {
           );
         },
       ),
+    ),
     );
   }
 }

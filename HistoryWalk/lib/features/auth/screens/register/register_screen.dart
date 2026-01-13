@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:historywalk/features/auth/controller/auth_controller.dart';
 import 'package:historywalk/common/styles/spacing_styles.dart';
 import 'package:historywalk/features/auth/controller/login_controller.dart';
+import 'package:historywalk/navigation_menu.dart';
 import 'package:historywalk/utils/constants/text_strings.dart';
 import 'package:historywalk/utils/constants/sizes.dart';
 
@@ -43,11 +44,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    await authController.register(
+    bool success = await authController.register(
       emailController.text.trim(),
       passwordController.text.trim(),
       nameController.text.trim(),
     );
+
+    if(success){
+      Get.offAll(() => const NavigationMenu());
+    }
   }
 
   @override

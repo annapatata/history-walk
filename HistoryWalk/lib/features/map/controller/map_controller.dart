@@ -1,6 +1,9 @@
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:historywalk/features/profile/controller/profile_controller.dart';
+import 'package:historywalk/features/routes/screens/routes_screen.dart';
+import 'package:historywalk/navigation_menu.dart';
 // Assuming your model paths are correct
 import '../../routes/models/stopmodel.dart'; 
 import '../../routes/models/route_model.dart';
@@ -14,8 +17,10 @@ class MapController extends GetxController {
   var isPaused = false.obs;
   var paragraphs = <String>[].obs;
   var currentStop = Rxn<StopModel>(); // Tracks which stop is active
-  
+  var activeRoute = Rxn<RouteModel>(); //track the current route object
+
   List<StopModel> allRouteStops = []; // To store all stops of the current route
+
 
   @override
   void onInit() {
@@ -126,9 +131,10 @@ class MapController extends GetxController {
     moveToNextStop();
   }
 
-  void moveToNextStop() {
+  void moveToNextStop() async {
     if (currentStop.value == null) return;
 
+    await flutterTts.stop();
     // Find current index
     int currentIndex = allRouteStops.indexWhere((s) => s.id == currentStop.value!.id);
 
@@ -136,8 +142,8 @@ class MapController extends GetxController {
       // There IS a next stop
       StopModel nextStop = allRouteStops[currentIndex + 1];
       
-      flutterTts.stop();
-      Get.back(); // Close the "History/Details" sheet/page
+      
+      Get.back();// Close the "History/Details" sheet/page
       
       Get.snackbar(
         "Stop Completed", 
@@ -153,13 +159,40 @@ class MapController extends GetxController {
       // Or wait for the user to reach the location and tap "Start"
     } else {
       // Route Finished
-      flutterTts.stop();
-      Get.back();
-      Get.snackbar(
-        "Route Finished", 
-        "Congratulations! You have completed the route.",
-        snackPosition: SnackPosition.BOTTOM,
+      await finalizeRoute();
+    }
+  }
+
+  Future<void> finalizeRoute() async {
+    await flutterTts.stop();
+    if(Get.isBottomSheetOpen ?? false) Get.back();
+
+    final profileCtrl = Get.find<ProfileController>();
+    final String? routeId = activeRoute.value?.id;
+    try{
+      isLoading.value = true;
+      String uid = profileCtrl.userProfile.value!.uid;
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'completedRoutes': FieldValue.arrayUnion([routeId]),
+      });
+
+      await profileCtrl.fetchUserProfile(uid);
+
+      Get.defaultDialog(
+        title: "Route Completed! 🏆",
+      middleText: "You've unlocked new badges.",
+      textConfirm: "Back to Routes",
+      onConfirm: () {
+        clearStops();
+        activeRoute.value = null;
+        Get.offAll(() => const NavigationMenu());
+      },
       );
+    } catch(e){
+      print("error finalizing route: $e");
+    }finally {
+      isLoading.value=false;
     }
   }
 
@@ -251,6 +284,7 @@ Future<void> loadAllRoutesWithStops() async {
 
   /// Fetches all StopModel objects for a specific Route
   Future<void> loadRouteStops(RouteModel route) async {
+    activeRoute.value = route;
     try {
       isLoading.value = true;
       

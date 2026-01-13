@@ -1,6 +1,7 @@
 // map_screen.dart
 import 'package:flutter/material.dart';
 import 'package:historywalk/common/widgets/searchbar.dart';
+import 'package:historywalk/navigation_menu.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'; // For the MapWidget and Controller
 import 'package:flutter/services.dart'; // If loading custom map styles or icons from assets
 import 'package:geolocator/geolocator.dart' as geo;
@@ -9,6 +10,7 @@ import '../controller/map_controller.dart';
 import '../../routes/models/route_model.dart';
 import '../../routes/models/stopmodel.dart';
 import 'dart:async';
+import '../../routes/screens/routes_screen.dart';
 
 class MapScreen extends StatefulWidget {
   final RouteModel? selectedRoute; // If null, show all routes
@@ -31,7 +33,6 @@ class _MapScreenState extends State<MapScreen> {
     ever(controller.currentStop, (StopModel? stop) {
       if (stop != null) {
         _moveCameraToStop(stop);
-
       }
     });
   }
@@ -166,8 +167,24 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       builder: (context) {
-        return Obx(
-          () => Container(
+        return Obx((){
+          // 1. Create safety variables
+  final stops = widget.selectedRoute?.mapstops ?? [];
+  
+  // 2. Add a 'Guard Clause'
+  // If the list is empty, return a placeholder so it doesn't crash during closing
+  if (stops.isEmpty || controller.paragraphs.isEmpty) {
+    return const SizedBox.shrink(); 
+  }
+
+  // 3. Now define your conditions safely
+  final isLastParagraph = controller.currentParagraphIndex.value >= controller.paragraphs.length - 1;
+  
+  // USE .lastOrNull (if using Dart 3) or check length
+  final isLastStop = stops.isNotEmpty && stops.last.id == stop.id;
+  final bool isFinishState = isLastParagraph && isLastStop;
+
+          return Container(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -181,7 +198,30 @@ class _MapScreenState extends State<MapScreen> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+
+                if (stop.imageUrls.isNotEmpty)
+                  SizedBox(
+                    height: 180,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: stop.imageUrls.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: Image.network(
+                              stop.imageUrls[index],
+                              width: 280,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 const SizedBox(height: 15),
+
                 // Progress Bar
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
@@ -263,51 +303,29 @@ class _MapScreenState extends State<MapScreen> {
                     ),
 
                     ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE9B32A),
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () {
-                        if (controller.currentParagraphIndex.value <
-                            controller.paragraphs.length - 1) {
-                          controller.nextParagraph();
-                        } else {
-                          // Αν τελείωσαν οι παράγραφοι, ψάχνουμε την επόμενη στάση
-                          final stops = widget.selectedRoute!.mapstops;
-                          final currentIndex = stops.indexWhere(
-                            (s) => s.id == stop.id,
-                          );
-
-                          if (currentIndex != -1 &&
-                              currentIndex < stops.length - 1) {
-                            controller.moveToNextStop();
-                          } else {
-                            // Τελείωσαν όλες οι στάσεις
-                            Navigator.pop(context); // Κλείνουμε το bottom sheet
-                          }
-                        }
-                      },
-                      icon: Icon(
-                        controller.currentParagraphIndex.value <
-                                controller.paragraphs.length - 1
-                            ? Icons.skip_next
-                            : Icons.check_circle,
-                      ),
-                      label: Text(
-                        controller.currentParagraphIndex.value <
-                                controller.paragraphs.length - 1
-                            ? "Next"
-                            : "Complete",
-                      ),
-                    ),
+          onPressed: () async {
+            if (!isLastParagraph) {
+              controller.nextParagraph();
+            } else if (!isLastStop) {
+              controller.moveToNextStop();
+            } else {
+              await controller.finalizeRoute();
+            }
+          },
+          icon: Icon(isFinishState ? Icons.flag_rounded : Icons.skip_next),
+          label: Text(isFinishState ? "FINISH" : "Next"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isFinishState ? Colors.green : const Color(0xFFE9B32A),
+          ),
+        ),
                   ],
                 ),
                 const SizedBox(height: 10),
               ],
             ),
-          ),
-        );
-      },
+          );
+      });
+  }
     );
   }
 
@@ -376,6 +394,40 @@ class _MapScreenState extends State<MapScreen> {
                 }
               },
             ),
+
+            Positioned(
+              top: 60, // Adjust based on your SearchBar height
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    shape: const StadiumBorder(),
+                    elevation: 4,
+                  ),
+                  onPressed: () {
+                    Get.defaultDialog(
+                      title: "End Route?",
+                      middleText:
+                          "Are you sure you want to stop now? Your progress won't be saved.",
+                      textCancel: "Cancel",
+                      textConfirm: "End Now",
+                      confirmTextColor: Colors.white,
+                      onConfirm: () {
+                        controller.flutterTts.stop();
+                        Get.offAll(() => const NavigationMenu());
+                      },
+                    );
+                  },
+                  child: const Text(
+                    "END ROUTE",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
             Obx(() {
               if (controller.isLoading.value) {
                 return Container(
@@ -387,7 +439,7 @@ class _MapScreenState extends State<MapScreen> {
               }
             }),
 
-            // 2. Floating Action Button for Location
+            // Floating Action Button for Location
             Positioned(
               bottom: 30,
               right: 20,
@@ -407,7 +459,7 @@ class _MapScreenState extends State<MapScreen> {
                   horizontal: 16.0,
                   vertical: 10.0,
                 ),
-                child: Column(children: [HWSearchBar()]),
+                //child: Column(children: [HWSearchBar()]),
               ),
             ),
           ],

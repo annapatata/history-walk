@@ -3,6 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:historywalk/features/profile/models/user_profile.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../profile/controller/profile_controller.dart';
+import '../../map/controller/map_controller.dart';
+import '../../reviews/controller/review_controller.dart';
+import '../screens/login/login_screen.dart';
 
 class AuthController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -25,7 +29,7 @@ class AuthController extends GetxController {
   RxBool isLoading = false.obs;
 
   /// Register με email & password & name
-  Future<void> register(String email, String password, String name) async {
+  Future<bool> register(String email, String password, String name) async {
     isLoading.value = true;
 
     try {
@@ -51,9 +55,12 @@ class AuthController extends GetxController {
           .collection('users')
           .doc(credential.user!.uid)
           .set(newUser.toJson());
+
       Get.snackbar('Success', 'Account created successfully');
+      return true;
     } on FirebaseAuthException catch (e) {
       Get.snackbar('Register error', e.message ?? 'Something went wrong');
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -63,7 +70,7 @@ class AuthController extends GetxController {
   Future<bool> login(String email, String password) async {
     try {
       isLoading.value = true;
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      UserCredential userCredential= await _auth.signInWithEmailAndPassword(email: email, password: password);
       // Save email if Remember Me is checked
       if (rememberMe.value) {
         _box.write('REMEMBER_ME_EMAIL', email);
@@ -72,6 +79,8 @@ class AuthController extends GetxController {
         _box.remove('REMEMBER_ME_EMAIL');
         _box.write('REMEMBER_ME_BOOL', false);
       }
+      final profileController = Get.find<ProfileController>();
+      await profileController.fetchUserProfile(userCredential.user!.uid);
       return true;
     } on FirebaseAuthException catch (e) {
       Get.snackbar('Login error', e.message ?? 'Something went wrong');
@@ -83,8 +92,22 @@ class AuthController extends GetxController {
 
   /// Logout
   Future<void> logout() async {
+  try {
     await _auth.signOut();
+
+    // 1. Manually clear the profile data
+    final profileController = Get.find<ProfileController>();
+    profileController.userProfile.value = null; // Clear local user data
+
+    // 2. Clear map/review data so the new user starts fresh
+    Get.find<MapController>().clearStops();
+    Get.find<ReviewController>().reviews.clear();
+
+    Get.offAll(()=> const LoginScreen());
+  } catch (e) {
+    Get.snackbar("Error", "Logout failed: $e");
   }
+}
 
   //password reset
   Future<void> sendPasswordResetEmail(String email) async {

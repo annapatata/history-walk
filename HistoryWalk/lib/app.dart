@@ -4,6 +4,7 @@ import 'package:historywalk/utils/theme/app_theme.dart';
 import 'features/splash/screens/splash_screen.dart';
 import '../features/auth/controller/auth_controller.dart';
 import '../features/auth/controller/login_controller.dart';
+import '../features/profile/controller/profile_controller.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -14,6 +15,7 @@ class App extends StatelessWidget {
     // Initialize AuthController PERMANENTLY so it never dies
     Get.put(AuthController(), permanent: true);
     Get.put(LoginController(),permanent:true);
+    Get.put(ProfileController(),permanent:true);
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 

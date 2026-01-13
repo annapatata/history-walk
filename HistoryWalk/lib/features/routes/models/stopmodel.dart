@@ -7,7 +7,7 @@ class StopModel {
   final GeoPoint location; // Use GeoPoint for Firestore compatibility
   final int order;
   final String historyContent;
-
+  
   StopModel({
     required this.id,
     required this.name,
