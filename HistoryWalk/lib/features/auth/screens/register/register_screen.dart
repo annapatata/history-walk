@@ -6,6 +6,7 @@ import 'package:historywalk/features/auth/controller/login_controller.dart';
 import 'package:historywalk/navigation_menu.dart';
 import 'package:historywalk/utils/constants/text_strings.dart';
 import 'package:historywalk/utils/constants/sizes.dart';
+import 'package:historywalk/features/onboarding/screens/intropage.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -51,7 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if(success){
-      Get.offAll(() => const NavigationMenu());
+      Get.offAll(() => const OnboardingScreen());
     }
   }
 

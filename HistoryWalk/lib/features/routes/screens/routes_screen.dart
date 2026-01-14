@@ -1,136 +1,161 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Add this
 import 'package:historywalk/features/reviews/controller/review_controller.dart';
 import '../widgets/route_box.dart';
-import '../models/route_model.dart';
 import 'routedetails.dart';
 import 'package:historywalk/common/layouts/section_screen.dart';
-import '../models/stopmodel.dart';
 import '../../profile/controller/profile_controller.dart';
 import 'package:get/get.dart';
+import '../controller/route_controller.dart';
 
 class RoutesScreen extends StatelessWidget {
   const RoutesScreen({super.key});
-
-  // Function to fetch data from Firestore
-  Future<List<RouteModel>> getRoutesWithStops() async {
-    final firestore = FirebaseFirestore.instance;
-
-    // 1. Fetch all Routes
-    final routeSnapshot = await firestore.collection('routes').get();
-
-    List<RouteModel> fullRoutes = [];
-
-    for (var routeDoc in routeSnapshot.docs) {
-      // Create the route from Firestore data
-      RouteModel route = RouteModel.fromFirestore(routeDoc);
-
-      // 2. Fetch the specific stops for THIS route
-      if (route.stops.isNotEmpty) {
-        final stopsSnapshot = await firestore
-            .collection('stops')
-            .where(FieldPath.documentId, whereIn: route.stops)
-            .get();
-
-        // Convert stop docs to StopModel objects
-        List<StopModel> fetchedStops = stopsSnapshot.docs
-            .map((doc) => StopModel.fromFirestore(doc))
-            .toList();
-
-        // Sort them by your 'order' field to ensure Stop 1 is before Stop 2
-        fetchedStops.sort((a, b) => a.order.compareTo(b.order));
-
-        // 3. Attach them to the mapstops field
-        route = RouteModel(
-          id: route.id,
-          name: route.name,
-          description: route.description,
-          imageUrl: route.imageUrl,
-          routepic: route.routepic,
-          timePeriods: route.timePeriods,
-          duration: route.duration,
-          difficulty: route.difficulty,
-          stops: route.stops,
-          mapstops: fetchedStops,
-          rating: route.rating,
-          reviewCount: route.reviewCount,
-          color: route.color,
-        );
-      }
-
-      fullRoutes.add(route);
-    }
-
-    return fullRoutes;
-  }
 
   @override
   Widget build(BuildContext context) {
     final ProfileController profileController = Get.find();
     final ReviewController reviewController = Get.put(ReviewController());
+    final RouteController routeController = Get.put(RouteController());
+
     return Scaffold(
-    body: SectionScreenLayout(
-      title: 'ROUTES',
-      body: FutureBuilder<List<RouteModel>>(
-        future: getRoutesWithStops(),
-        builder: (context, snapshot) {
-          // 1. Show loading spinner while waiting
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SectionScreenLayout(
+        title: 'ROUTES',
+        body: Column(
+          children: [
+            // --- DROPDOWN PILLS ROW ---
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: Row(
+                  children: [
+                    // 1. Time Period Dropdown
+                    _buildDropdownPill(
+                      label: "Period",
+                      currentValue: routeController.selectedPeriod,
+                      items: ['All', 'Ancient Greece', 'Roman Empire', 'WW2', 'Byzantine', 'Medieval', 'Modern'],
+                      onChanged: (val) => routeController.updateFilter('period', val),
+                    ),
+                    const SizedBox(width: 8),
+                    // 2. Difficulty Dropdown
+                    _buildDropdownPill(
+                      label: "Difficulty",
+                      currentValue: routeController.selectedDifficulty,
+                      items: ['All', 'Easy', 'Medium', 'Hard'],
+                      onChanged: (val) => routeController.updateFilter('difficulty', val),
+                    ),
+                    const SizedBox(width: 8),
+                    // 3. Duration Dropdown
+                    _buildDropdownPill(
+                      label: "Duration",
+                      currentValue: routeController.selectedDuration,
+                      items: ['All', '15+ min', '30+ min', '60+ min'],
+                      onChanged: (val) => routeController.updateFilter('duration', val),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
-          // 2. Show error message if something goes wrong
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+            // --- ROUTE LIST ---
+            Expanded(
+              child: Obx(() {
+                if (routeController.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          // 3. Show message if database is empty
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No routes found.'));
-          }
+                final routes =
+                    routeController.displayRoutes; // Get the sorted list
 
-          // 4. Show the list of actual routes
-          final routes = snapshot.data!;
+                return ListView.builder(
+                  itemCount: routes.length,
+                  itemBuilder: (context, index) {
+                    final route = routes[index];
+                    final bool finished = profileController.isRouteCompleted(
+                      route.id,
+                    );
 
-          return ListView.builder(
-            itemCount: routes.length,
-            itemBuilder: (context, index) {
-              final route = routes[index];
-              final bool finished = profileController.isRouteCompleted(
-                route.id,
-              );
+                    // Visual indicator if the route matches the current filter
+                    bool isMatch = routeController.checkMatch(route);
 
-              return Stack(
-                children: [
-                  RouteBox(
-                    route: route,
-                    onTap: () { 
-                      reviewController.fetchReviews(route.id);
-                      Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => RouteDetails(route: route),
+                    return Opacity(
+                      // Subtly dim routes that don't match the filter
+                      opacity: isMatch ? 1.0 : 0.6,
+                      child: Stack(
+                        children: [
+                          RouteBox(
+                            route: route,
+                            onTap: () {
+                              reviewController.fetchReviews(route.id);
+                              Get.to(() => RouteDetails(route: route));
+                            },
+                          ),
+                          if (finished)
+                            const Positioned(
+                              top: 10,
+                              right: 10,
+                              child: Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 30,
+                              ),
+                            ),
+                        ],
                       ),
                     );
-                    }
-                  ),
-                  if (finished)
-                    const Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Icon(
-                        Icons.check_circle,
-                        color: Color.fromARGB(255, 30, 107, 32),
-                        size: 30,
-                      ),
-                    ),
-                ],
-              );
-            },
-          );
-        },
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
+
+  // --- HELPER WIDGET FOR DROPDOWN PILLS ---
+  Widget _buildDropdownPill({
+    required String label,
+    required RxString currentValue,
+    required List<String> items,
+    required Function(String) onChanged,
+  }) {
+    return Obx(() {
+      bool isActive = currentValue.value != 'All';
+      
+      return PopupMenuButton<String>(
+        onSelected: onChanged,
+        itemBuilder: (context) => items.map((item) => PopupMenuItem(
+          value: item,
+          child: Text(item),
+        )).toList(),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFE9B32A) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            children: [
+              Text(
+                isActive ? currentValue.value : label,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_drop_down,
+                color: isActive ? Colors.white : Colors.black54,
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
 }
+

@@ -1,6 +1,30 @@
-import 'time_period.dart';
 import 'stopmodel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+enum TimePeriod {
+  ancient,
+  roman,
+  byzantine,
+  medieval,
+  ww2,
+  modern;
+
+  // Helper to convert from String (Firestore) to Enum
+  static TimePeriod fromString(String value) {
+    return TimePeriod.values.firstWhere(
+      (e) => e.name == value.toLowerCase(),
+      orElse: () => TimePeriod.ancient,
+    );
+  }
+
+  // Helper to display it nicely in the UI
+  String get displayName {
+    switch (this) {
+      case TimePeriod.ancient: return "Ancient Greece";
+      case TimePeriod.ww2: return "WW2";
+      default: return name[0].toUpperCase() + name.substring(1);
+    }
+  }
+}
 
 class RouteModel {
   final String id;
@@ -35,6 +59,7 @@ class RouteModel {
     required this.color,
   });
 
+
   // Helper method to get stops in the correct sequence
   List<StopModel> get sortedStops {
     return mapstops..sort((a, b) => a.order.compareTo(b.order));
@@ -42,6 +67,12 @@ class RouteModel {
 
   factory RouteModel.fromFirestore(DocumentSnapshot doc) {
   Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+  List<String> rawPeriods = List<String>.from(data['timePeriods']??[]);
+  List<TimePeriod> mappedPeriods = rawPeriods
+      .map((p) => TimePeriod.fromString(p))
+      .toList();
+
   return RouteModel(
     id: doc.id,
     name: data['name'] ?? '',
@@ -53,7 +84,7 @@ class RouteModel {
     stops: List<String>.from(data['stops'] ?? []),
     mapstops: [], // We leave this empty initially
     imageUrl: List<String>.from(data['imageUrl'] ?? []),
-    timePeriods: [], // Map these if you have a TimePeriod enum/class
+    timePeriods: mappedPeriods, // Map these if you have a TimePeriod enum/class
     duration: Duration(minutes: data['duration_minutes'] ?? 0),
     color: data['color'] ?? 0xFF000000,
   );

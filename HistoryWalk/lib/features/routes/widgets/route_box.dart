@@ -140,8 +140,8 @@ final stopText = route.mapstops.isNotEmpty
                             const SizedBox(width: 4),
                             Text(
                               route.timePeriods.isNotEmpty
-                                  ? formatPeriod(route.timePeriods.first)
-                                  : 'Unknown',
+                                  ? route.timePeriods.map((tp)=>tp.displayName).join(",")
+                                  : 'General History',
                               style: TextStyle(
                                   color: boxTheme.textColor, fontSize: 12),
                               overflow: TextOverflow.ellipsis,

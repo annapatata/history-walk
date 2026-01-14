@@ -167,22 +167,24 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       builder: (context) {
-        return Obx((){
+        return Obx(() {
           // 1. Create safety variables
-  final stops = widget.selectedRoute?.mapstops ?? [];
-  
-  // 2. Add a 'Guard Clause'
-  // If the list is empty, return a placeholder so it doesn't crash during closing
-  if (stops.isEmpty || controller.paragraphs.isEmpty) {
-    return const SizedBox.shrink(); 
-  }
+          final stops = widget.selectedRoute?.mapstops ?? [];
 
-  // 3. Now define your conditions safely
-  final isLastParagraph = controller.currentParagraphIndex.value >= controller.paragraphs.length - 1;
-  
-  // USE .lastOrNull (if using Dart 3) or check length
-  final isLastStop = stops.isNotEmpty && stops.last.id == stop.id;
-  final bool isFinishState = isLastParagraph && isLastStop;
+          // 2. Add a 'Guard Clause'
+          // If the list is empty, return a placeholder so it doesn't crash during closing
+          if (stops.isEmpty || controller.paragraphs.isEmpty) {
+            return const SizedBox.shrink();
+          }
+
+          // 3. Now define your conditions safely
+          final isLastParagraph =
+              controller.currentParagraphIndex.value >=
+              controller.paragraphs.length - 1;
+
+          // USE .lastOrNull (if using Dart 3) or check length
+          final isLastStop = stops.isNotEmpty && stops.last.id == stop.id;
+          final bool isFinishState = isLastParagraph && isLastStop;
 
           return Container(
             padding: const EdgeInsets.all(20),
@@ -210,10 +212,15 @@ class _MapScreenState extends State<MapScreen> {
                           padding: const EdgeInsets.only(right: 8.0),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(15),
-                            child: Image.network(
+                            child: Image.asset(
                               stop.imageUrls[index],
                               width: 280,
                               fit: BoxFit.cover,
+                              // Error builder helps if you have a typo in the asset path
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Center(
+                                    child: Icon(Icons.broken_image, size: 50),
+                                  ),
                             ),
                           ),
                         );
@@ -303,29 +310,33 @@ class _MapScreenState extends State<MapScreen> {
                     ),
 
                     ElevatedButton.icon(
-          onPressed: () async {
-            if (!isLastParagraph) {
-              controller.nextParagraph();
-            } else if (!isLastStop) {
-              controller.moveToNextStop();
-            } else {
-              await controller.finalizeRoute();
-            }
-          },
-          icon: Icon(isFinishState ? Icons.flag_rounded : Icons.skip_next),
-          label: Text(isFinishState ? "FINISH" : "Next"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isFinishState ? Colors.green : const Color(0xFFE9B32A),
-          ),
-        ),
+                      onPressed: () async {
+                        if (!isLastParagraph) {
+                          controller.nextParagraph();
+                        } else if (!isLastStop) {
+                          controller.moveToNextStop();
+                        } else {
+                          await controller.finalizeRoute();
+                        }
+                      },
+                      icon: Icon(
+                        isFinishState ? Icons.flag_rounded : Icons.skip_next,
+                      ),
+                      label: Text(isFinishState ? "FINISH" : "Next"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isFinishState
+                            ? Colors.green
+                            : const Color(0xFFE9B32A),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
               ],
             ),
           );
-      });
-  }
+        });
+      },
     );
   }
 
