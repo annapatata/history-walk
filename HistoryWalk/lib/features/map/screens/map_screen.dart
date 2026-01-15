@@ -17,6 +17,7 @@ import 'package:historywalk/utils/constants/app_colors.dart';
 import '../../profile/controller/profile_controller.dart';
 import '../../reviews/widgets/writereview.dart';
 import 'package:historywalk/features/reviews/controller/review_controller.dart';
+import 'dart:ui' as ui;
 
 class MapScreen extends StatefulWidget {
   final RouteModel? selectedRoute; // If null, show all routes
@@ -205,25 +206,23 @@ class _MapScreenState extends State<MapScreen> {
             lineSortKey: 1.0, 
           ),
         );
-
+        
         // --- 2. Draw the INVISIBLE "Tappable Line" (Ghost Line) ---
-        // This is drawn on top, is wider, and transparent.
-        final tappableAnnotation = await polylineAnnotationManager?.create(
-          PolylineAnnotationOptions(
-            geometry: geometry,
-            // Fully transparent color
-            lineColor: Colors.transparent.value, 
-            // Much wider hit area make tapping easy
-            lineWidth: 35.0, 
-            lineJoin: LineJoin.ROUND,
-             // Ensure this is drawn on top to capture taps first
-            lineSortKey: 2.0,
-          ),
-        );
+        // CHANGE: Only draw the ghost line if NO route is selected.
+        if (widget.selectedRoute == null) { // <--- ADD THIS CHECK
+          final tappableAnnotation = await polylineAnnotationManager?.create(
+            PolylineAnnotationOptions(
+              geometry: geometry,
+              lineColor: Colors.transparent.value, 
+              lineWidth: 35.0, // This was stealing your clicks!
+              lineJoin: LineJoin.ROUND,
+              lineSortKey: 2.0,
+            ),
+          );
 
-        // CRITICAL: Store link ONLY for the wide, tappable ghost line
-        if (tappableAnnotation != null) {
-          _polylineToRouteMap[tappableAnnotation.id] = route;
+          if (tappableAnnotation != null) {
+            _polylineToRouteMap[tappableAnnotation.id] = route;
+          }
         }
 
         if (widget.selectedRoute != null) {
@@ -249,6 +248,50 @@ class _MapScreenState extends State<MapScreen> {
               markerToStopMap[annotations[i]!.id] = stops[i];
             }
           }
+        }
+        else {
+          // --- 3. Draw "Dots" for non-selected routes ---
+          
+          // GENERATE DOT IMAGE:
+          // We create a colored circle on the fly using the route's color.
+          final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+          final Canvas canvas = Canvas(pictureRecorder);
+          const double size = 30.0; // The resolution of the dot (pixels)
+
+          final Paint paint = Paint()
+            ..color = Color(route.color) // Convert the int color to a Flutter Color
+            ..style = PaintingStyle.fill;
+
+          // Draw the circle
+          canvas.drawCircle(
+            Offset(size / 2, size / 2), 
+            size / 2, 
+            paint
+          );
+
+          // Convert canvas to a Uint8List image
+          final ui.Image image = await pictureRecorder
+              .endRecording()
+              .toImage(size.toInt(), size.toInt());
+          final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+          final Uint8List dotImage = byteData!.buffer.asUint8List();
+
+          // CREATE ANNOTATIONS:
+          final dotOptions = stops.map((stop) {
+            return PointAnnotationOptions(
+              geometry: Point(
+                coordinates: Position(
+                  stop.location.longitude,
+                  stop.location.latitude,
+                ),
+              ),
+              symbolSortKey: 1.0, // Ensure dots sit above lines
+              image: dotImage,    // Use the generated colored dot
+              iconSize: 1,      // Scale down visually if the 30px image is too big
+            );
+          }).toList();
+
+          await pointAnnotationManager?.createMulti(dotOptions);
         }
         
       }
