@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:historywalk/features/routes/models/route_model.dart';
 import 'package:historywalk/utils/theme/extensions/searchbar_theme.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
+import '../../features/routes/controller/route_controller.dart';
+import 'package:get/get.dart';
 
 class HWSearchBar extends StatelessWidget {
   final String placeholder;
@@ -33,7 +36,10 @@ class HWSearchBar extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
-              onChanged: null,
+              onChanged: (val) {
+                  // Get.find looks for the controller that RoutesScreen already created
+                  Get.find<RouteController>().updateSearchQuery(val);
+              },
               style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                 color: searchbarTheme?.textColor?? AppColors.textLight,
                 ),

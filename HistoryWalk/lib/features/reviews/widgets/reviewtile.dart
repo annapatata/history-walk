@@ -66,6 +66,11 @@ class ReviewTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    "@${review.userName}",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(height: 4),
                   // Star Rating Row
                   Row(
                     children: List.generate(5, (index) {

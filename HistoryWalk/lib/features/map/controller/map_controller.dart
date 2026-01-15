@@ -94,7 +94,7 @@ class MapController extends GetxController {
   void nextParagraph() {
     if (currentParagraphIndex.value < paragraphs.length - 1) {
       currentParagraphIndex.value++;
-      _readCurrentParagraph();
+      if (!isPaused.value) _readCurrentParagraph();
     } else {
       // If the user clicks "Next" while on the last paragraph, 
       // it means they want to skip to the next stop immediately.
@@ -106,11 +106,11 @@ class MapController extends GetxController {
   void previousParagraph(){
     if(currentParagraphIndex.value >0 ){
       currentParagraphIndex.value--;
-      _readCurrentParagraph();
+      if (!isPaused.value) _readCurrentParagraph();
     } else {
       Get.snackbar(
-      "Αρχή Κειμένου", 
-      "Βρίσκεστε ήδη στην πρώτη παράγραφο.",
+      "Text Start", 
+      "You are already at the first paragraph.",
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 1),
     );

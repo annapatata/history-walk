@@ -10,7 +10,13 @@ import '../controller/map_controller.dart';
 import '../../routes/models/route_model.dart';
 import '../../routes/models/stopmodel.dart';
 import 'dart:async';
-import '../../routes/screens/routes_screen.dart';
+import '../../routes/screens/routedetails.dart';
+import '../../routes/widgets/route_box.dart';
+import 'package:historywalk/common/widgets/primaryactionbutton.dart';
+import 'package:historywalk/utils/constants/app_colors.dart';
+import '../../profile/controller/profile_controller.dart';
+import '../../reviews/widgets/writereview.dart';
+import 'package:historywalk/features/reviews/controller/review_controller.dart';
 
 class MapScreen extends StatefulWidget {
   final RouteModel? selectedRoute; // If null, show all routes
@@ -89,63 +95,162 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  //  Draw routes and stops on the map
+  // 1. Map to link Mapbox IDs to your Route objects
+  final Map<String, RouteModel> _polylineToRouteMap = {};
+
+  // 2. A flag to ensure we don't register the click listener multiple times
+  bool _isRouteListenerAdded = false;
+  
+  // Show route details popup on polyline tap
+  void _showRoutePopup(RouteModel route) {
+    final ReviewController reviewController = Get.put(ReviewController());
+    final ProfileController profileController = Get.find();
+
+    final bool isCompleted = profileController.isRouteCompleted(route.id);
+    final bool isReviewed = profileController.userProfile.value?.reviewedRoutes.contains(route.id)??false;
+
+    String buttonLabel = 'START ROUTE';
+      if(isCompleted){
+        buttonLabel = isReviewed ? 'EDIT YOUR REVIEW' : 'WRITE A REVIEW';
+      }
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent, // Let the container handle the styling
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Wrap content height
+            children: [
+              // 1. The Route Tile (Reusing your existing widget)
+              RouteBox(route: route,
+                       onTap: () {
+                        reviewController.fetchReviews(route.id);
+                        Get.to(() => RouteDetails(route: route));
+                        },
+                      ), 
+              
+              const SizedBox(height: 20),
+
+              // 2. The "Start Route" Button
+              PrimaryActionButton(
+                label: buttonLabel,
+                onPressed: () async {
+
+                  if(isCompleted){
+                    showDialog(
+                      context:context,
+                      builder: (context) => WriteReviewModal(routeId: route.id,isEditing: isReviewed),
+                    );
+                  } else {
+                  final MapController mapController = Get.find();
+
+                  // 1. Trigger the fetch
+                  // 2. IMPORTANT: Use 'await' so we don't move to the next screen until data is here
+                  await mapController.loadRouteStops(route);
+
+                  // 3. Now navigate
+                  Get.to(() => MapScreen(selectedRoute: route));
+                }
+                },
+                backgroundcolour: isCompleted ? AppColors.stars : AppColors.searchBarDark,
+              ),
+              const SizedBox(height: 10), // Safe area spacing
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _drawRoutes(List<RouteModel> routes) async {
     if (polylineAnnotationManager == null || pointAnnotationManager == null) {
       print("⚠️ Managers not ready yet");
       return;
     }
+
     try {
-      // Clear map before drawing to prevent duplicates
+
+      // Clear map and our local ID map
       await polylineAnnotationManager?.deleteAll();
       await pointAnnotationManager?.deleteAll();
 
-      // Load the marker icon once outside the loop for better performance
+      // Load marker icon
       final ByteData bytes = await rootBundle.load('assets/icons/marker.png');
       final Uint8List markerImage = bytes.buffer.asUint8List();
 
       for (var route in routes) {
-        // mapstops must be populated by the controller before calling this
         final List<StopModel> stops = route.mapstops;
-
         if (stops.isEmpty) continue;
 
-        // 1. Draw the "Metro Line"
         final lineCoordinates = stops
             .map((s) => Position(s.location.longitude, s.location.latitude))
             .toList();
+        
+        final geometry = LineString(coordinates: lineCoordinates);
 
+        // --- 1. Draw the VISIBLE "Metro Line" ---
+        // We don't need to capture its ID, it's just for looks.
         await polylineAnnotationManager?.create(
           PolylineAnnotationOptions(
-            geometry: LineString(coordinates: lineCoordinates),
-            lineColor: route.color, // Now a direct int from Firebase!
-            lineWidth: 6.0,
+            geometry: geometry,
+            lineColor: route.color, 
+            lineWidth: 6.0, // Standard visual width
             lineJoin: LineJoin.ROUND,
+            // Ensure visible line is drawn below the tappable one
+            lineSortKey: 1.0, 
           ),
         );
 
-        // 2. Draw the "Stations"
-        final markerOptions = stops.map((stop) {
-          return PointAnnotationOptions(
-            geometry: Point(
-              coordinates: Position(
-                stop.location.longitude,
-                stop.location.latitude,
-              ),
-            ),
-            image: markerImage,
-            iconSize: 0.09,
-          );
-        }).toList();
-        final annotations = await pointAnnotationManager?.createMulti(
-          markerOptions,
+        // --- 2. Draw the INVISIBLE "Tappable Line" (Ghost Line) ---
+        // This is drawn on top, is wider, and transparent.
+        final tappableAnnotation = await polylineAnnotationManager?.create(
+          PolylineAnnotationOptions(
+            geometry: geometry,
+            // Fully transparent color
+            lineColor: Colors.transparent.value, 
+            // Much wider hit area make tapping easy
+            lineWidth: 35.0, 
+            lineJoin: LineJoin.ROUND,
+             // Ensure this is drawn on top to capture taps first
+            lineSortKey: 2.0,
+          ),
         );
 
-        if (annotations != null) {
-          for (int i = 0; i < annotations.length; i++) {
-            markerToStopMap[annotations[i]!.id] = stops[i];
+        // CRITICAL: Store link ONLY for the wide, tappable ghost line
+        if (tappableAnnotation != null) {
+          _polylineToRouteMap[tappableAnnotation.id] = route;
+        }
+
+        if (widget.selectedRoute != null) {
+          // 3. Draw the "Stations" (Markers remain the same)
+          final markerOptions = stops.map((stop) {
+            return PointAnnotationOptions(
+              geometry: Point(
+                coordinates: Position(
+                  stop.location.longitude,
+                  stop.location.latitude,
+                ),
+              ),
+              symbolSortKey: 3.0,
+              image: markerImage,
+              iconSize: 0.09,
+            );
+          }).toList();
+
+          final annotations = await pointAnnotationManager?.createMulti(markerOptions);
+
+          if (annotations != null) {
+            for (int i = 0; i < annotations.length; i++) {
+              markerToStopMap[annotations[i]!.id] = stops[i];
+            }
           }
         }
+        
       }
     } catch (e) {
       print("Error drawing routes: $e");
@@ -373,6 +478,17 @@ class _MapScreenState extends State<MapScreen> {
                     },
                   );
 
+                  polylineAnnotationManager?.tapEvents(
+                    onTap: (annotation) {
+                      // The listener will now trigger on the wide invisible line.
+                      // We look up the route associated with that invisible line's ID.
+                      final route = _polylineToRouteMap[annotation.id];
+                      if (route != null && widget.selectedRoute == null) {
+                        _showRoutePopup(route);
+                      }
+                    },
+                  );
+
                   // Give the platform channel a tiny breath to establish connection
                   await Future.delayed(const Duration(milliseconds: 100));
                   // 2. Decide what data to show
@@ -481,5 +597,16 @@ Positioned(
         ),
       ),
     );
+  }
+}
+
+class PolylineClickListener implements OnPolylineAnnotationClickListener {
+  final Function(PolylineAnnotation) onTap;
+
+  PolylineClickListener({required this.onTap});
+
+  @override
+  void onPolylineAnnotationClick(PolylineAnnotation annotation) {
+    onTap(annotation);
   }
 }

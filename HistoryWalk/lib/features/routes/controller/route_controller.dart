@@ -16,6 +16,14 @@ class RouteController extends GetxController {
 
   var selectedFilter = 'All'.obs;
 
+  // 1. Add the variable
+  var searchQuery = ''.obs;
+
+  // 2. Add the update method
+  void updateSearchQuery(String query) {
+    searchQuery.value = query;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -43,7 +51,8 @@ class RouteController extends GetxController {
     // If all filters are default, return original list
     if (selectedPeriod.value == 'All' && 
         selectedDifficulty.value == 'All' && 
-        selectedDuration.value == 'All') {
+        selectedDuration.value == 'All' &&
+        searchQuery.value.isEmpty) {
       return allRoutes;
     }
 
@@ -75,8 +84,11 @@ class RouteController extends GetxController {
     if (selectedDuration.value == '30+ min') durationMatch = minutes >= 30;
     if (selectedDuration.value == '60+ min') durationMatch = minutes >= 60;
 
+    bool searchMatch = searchQuery.value.isEmpty || 
+      route.name.toLowerCase().contains(searchQuery.value.toLowerCase());
+
     // A route "Matches" if it satisfies all active (non-'All') filters
-    return periodMatch && difficultyMatch && durationMatch;
+    return periodMatch && difficultyMatch && durationMatch && searchMatch;
   }
 
   void updateFilter(String type, String value) {
