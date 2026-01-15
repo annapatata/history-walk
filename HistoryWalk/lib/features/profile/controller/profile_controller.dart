@@ -7,6 +7,7 @@ import '../models/badge.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart' as m;
 
 class ProfileController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -37,6 +38,8 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Read the value from storage and update the observable
+  isDarkObservable.value = _box.read('isDarkMode') ?? false;
     // Αν υπάρχει ήδη logged-in user, κάνουμε fetch
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
@@ -244,4 +247,14 @@ class ProfileController extends GetxController {
   bool isRouteCompleted(String routeId) {
     return userProfile.value?.completedRoutes.contains(routeId) ?? false;
   }
+
+
+  // Add this line
+RxBool isDarkObservable =  false.obs;
+
+void toggleTheme(bool value) {
+  isDarkObservable.value = value;
+  Get.changeThemeMode(value ? m.ThemeMode.dark : m.ThemeMode.light);
+  _box.write('isDarkMode', value);
+}
 }

@@ -29,7 +29,7 @@ class ProfileProgressBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9EE), // Light cream from image
+        color: const Color.fromARGB(255, 240, 207, 146), // Light cream from image
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -72,7 +72,7 @@ class ProfileProgressBar extends StatelessWidget {
                     Container(
                       height: height,
                       decoration: BoxDecoration(
-                        color: backgroundColor ?? Colors.grey.withOpacity(0.2),
+                        color: backgroundColor ?? const Color.fromARGB(255, 255, 255, 255).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(height),
                       ),
                     ),

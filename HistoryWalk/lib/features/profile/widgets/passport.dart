@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:historywalk/utils/constants/app_colors.dart';
 import 'package:historywalk/utils/theme/extensions/passport_theme.dart';
 
 class PassportCard extends StatelessWidget {
@@ -25,12 +26,12 @@ class PassportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final passTheme = theme.extension<PassportTheme>()!;
+    final passTheme = theme.extension<PassportTheme>();
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: passTheme.backgroundColor,
+        color: passTheme?.backgroundColor ?? AppColors.cardsLight,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -80,7 +81,7 @@ class _TopSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final passTheme = theme.extension<PassportTheme>()!;
+    final passTheme = theme.extension<PassportTheme>();
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,7 +92,7 @@ class _TopSection extends StatelessWidget {
             width: 90,
             height: 110,
             decoration: BoxDecoration(
-              color: passTheme.iconColor,
+              color: passTheme?.iconColor ?? AppColors.symbolsLight,
               borderRadius: BorderRadius.circular(12),
               image: avatarPath.isNotEmpty
                   ? DecorationImage(
@@ -131,7 +132,7 @@ class _TopSection extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: passTheme.iconColor,
+                      color: passTheme?.iconColor?? AppColors.symbolsDark,
                       width: 2,
                     ),
                   ),
@@ -190,7 +191,7 @@ class _BadgesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final passTheme = theme.extension<PassportTheme>()!;
+    final passTheme = theme.extension<PassportTheme>();
 
     return GestureDetector(
       onTap: onTap,
@@ -198,7 +199,7 @@ class _BadgesSection extends StatelessWidget {
         height: 36,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: passTheme.iconColor,
+          color: passTheme?.iconColor?? AppColors.stars,
           borderRadius: BorderRadius.circular(10),
         ),
         alignment: Alignment.center,

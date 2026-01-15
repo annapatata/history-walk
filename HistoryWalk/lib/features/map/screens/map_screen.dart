@@ -405,40 +405,44 @@ class _MapScreenState extends State<MapScreen> {
                 }
               },
             ),
-
-            Positioned(
-              top: 60, // Adjust based on your SearchBar height
-              left: 0,
-              right: 0,
-              child: Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    shape: const StadiumBorder(),
-                    elevation: 4,
-                  ),
-                  onPressed: () {
-                    Get.defaultDialog(
-                      title: "End Route?",
-                      middleText:
-                          "Are you sure you want to stop now? Your progress won't be saved.",
-                      textCancel: "Cancel",
-                      textConfirm: "End Now",
-                      confirmTextColor: Colors.white,
-                      onConfirm: () {
-                        controller.flutterTts.stop();
-                        Get.offAll(() => const NavigationMenu());
-                      },
-                    );
-                  },
-                  child: const Text(
-                    "END ROUTE",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
+Positioned(
+  top: 60,
+  left: 0,
+  right: 0,
+  child: Center(
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        // Change color based on status: Red for ending, Green for starting
+        backgroundColor: widget.selectedRoute != null ? Colors.redAccent : Colors.green,
+        foregroundColor: Colors.white,
+        shape: const StadiumBorder(),
+        elevation: 4,
+      ),
+      onPressed: () {
+        if (widget.selectedRoute != null) {
+          Get.defaultDialog(
+            title: "End Route?",
+            middleText: "Are you sure you want to stop now? Your progress won't be saved.",
+            textCancel: "Cancel",
+            textConfirm: "End Now",
+            confirmTextColor: Colors.white,
+            onConfirm: () {
+              controller.flutterTts.stop();
+              Get.offAll(() => const NavigationMenu());
+            },
+          );
+        } else {
+          Get.offAll(() => const NavigationMenu());
+        }
+      },
+      child: Text(
+        // Change text based on status
+        widget.selectedRoute != null ? "END ROUTE" : "START A ROUTE",
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
+    ),
+  ),
+),
             Obx(() {
               if (controller.isLoading.value) {
                 return Container(

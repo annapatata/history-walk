@@ -57,6 +57,8 @@ class AuthController extends GetxController {
           .set(newUser.toJson());
 
       Get.snackbar('Success', 'Account created successfully');
+      final profileController = Get.find<ProfileController>();
+      await profileController.fetchUserProfile(credential.user!.uid);
       return true;
     } on FirebaseAuthException catch (e) {
       Get.snackbar('Register error', e.message ?? 'Something went wrong');
@@ -96,6 +98,7 @@ class AuthController extends GetxController {
     await _auth.signOut();
 
     // 1. Manually clear the profile data
+    _box.remove('user_profile');
     final profileController = Get.find<ProfileController>();
     profileController.userProfile.value = null; // Clear local user data
 

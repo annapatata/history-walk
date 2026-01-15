@@ -30,7 +30,9 @@ class SectionScreenLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return Scaffold (
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    body:SafeArea(
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: _horizontalPadding(context),
@@ -63,6 +65,7 @@ class SectionScreenLayout extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

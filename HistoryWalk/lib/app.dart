@@ -5,6 +5,7 @@ import 'features/splash/screens/splash_screen.dart';
 import '../features/auth/controller/auth_controller.dart';
 import '../features/auth/controller/login_controller.dart';
 import '../features/profile/controller/profile_controller.dart';
+import 'package:get_storage/get_storage.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -16,11 +17,14 @@ class App extends StatelessWidget {
     Get.put(AuthController(), permanent: true);
     Get.put(LoginController(),permanent:true);
     Get.put(ProfileController(),permanent:true);
+
+  final box = GetStorage();
+  bool isDark = box.read('isDarkMode') ?? false;
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
 
       // THEME
-      themeMode: ThemeMode.light,
+      themeMode:ThemeMode.light,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
 

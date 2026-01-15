@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../utils/formatters/years.dart';
 import 'package:historywalk/utils/theme/extensions/route_box_theme.dart';
 import '../models/route_model.dart';
+import 'package:historywalk/utils/constants/app_colors.dart';
 
 class RouteBox extends StatelessWidget {
   final RouteModel route;
@@ -13,7 +13,7 @@ class RouteBox extends StatelessWidget {
 
     final screenWidth = MediaQuery.of(context).size.width;
     final theme = Theme.of(context);
-    final boxTheme = theme.extension<RouteBoxTheme>()!;
+    final boxTheme = theme.extension<RouteBoxTheme>();
 
     // Inside your RouteBox build method
 final stopText = route.mapstops.isNotEmpty 
@@ -32,13 +32,13 @@ final stopText = route.mapstops.isNotEmpty
       child: Container(
         constraints: const BoxConstraints(minHeight: 130),
         decoration: BoxDecoration(
-          color: boxTheme.backgroundColor,
-          borderRadius: BorderRadius.circular(boxTheme.borderRadius),
+          color: boxTheme?.backgroundColor?? AppColors.cardsDark,
+          borderRadius: BorderRadius.circular(boxTheme?.borderRadius??20),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.25),
-              blurRadius: boxTheme.elevation,
-              offset: Offset(0, boxTheme.elevation / 2),
+              blurRadius: boxTheme?.elevation ?? 10,
+              offset: Offset(0, 5),
             )
           ],
         ),
@@ -48,8 +48,8 @@ final stopText = route.mapstops.isNotEmpty
             // LEFT IMAGE
             ClipRRect(
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(boxTheme.borderRadius),
-                bottomLeft: Radius.circular(boxTheme.borderRadius),
+                topLeft: Radius.circular(boxTheme?.borderRadius??10),
+                bottomLeft: Radius.circular(boxTheme?.borderRadius??10),
               ),
               child: Image.asset(
                 route.routepic,
@@ -72,7 +72,7 @@ final stopText = route.mapstops.isNotEmpty
                     Text(
                       route.name,
                       style: TextStyle(
-                        color: boxTheme.textColor,
+                        color: boxTheme?.textColor?? AppColors.textLight,
                         fontWeight: FontWeight.bold,
                         fontSize: titleFontSize,
                       ),
@@ -95,17 +95,17 @@ final stopText = route.mapstops.isNotEmpty
                               ...List.generate(
                                 stars,
                                 (i) => Icon(Icons.star,
-                                    color: boxTheme.starColor, size: iconSize),
+                                    color: boxTheme?.starColor?? AppColors.stars, size: iconSize),
                               ),
                               ...List.generate(
                                 5 - stars,
                                 (i) => Icon(Icons.star_border,
-                                    color: boxTheme.starColor, size: iconSize),
+                                    color: boxTheme?.starColor?? AppColors.stars, size: iconSize),
                               ),
                               Text(
                                 "  ($stars/5 · $reviewCount reviews)",
                                 style: TextStyle(
-                                  color: boxTheme.textColor,
+                                  color: boxTheme?.textColor?? AppColors.textLight,
                                   fontSize: 12,
                                 ),
                               ),
@@ -120,7 +120,7 @@ final stopText = route.mapstops.isNotEmpty
                     // STOP LIST
                     Text(
                       "Stops: $stopText",
-                      style: TextStyle(color: boxTheme.textColor),
+                      style: TextStyle(color: boxTheme?.textColor?? AppColors.textLight),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -136,14 +136,14 @@ final stopText = route.mapstops.isNotEmpty
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.place,
-                                size: iconSize, color: boxTheme.iconColor),
+                                size: iconSize, color: boxTheme?.iconColor?? AppColors.symbolsDark),
                             const SizedBox(width: 4),
                             Text(
                               route.timePeriods.isNotEmpty
                                   ? route.timePeriods.map((tp)=>tp.displayName).join(",")
                                   : 'General History',
                               style: TextStyle(
-                                  color: boxTheme.textColor, fontSize: 12),
+                                  color: boxTheme?.textColor?? AppColors.textLight, fontSize: 12),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -153,12 +153,12 @@ final stopText = route.mapstops.isNotEmpty
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.access_time,
-                                size: iconSize, color: boxTheme.iconColor),
+                                size: iconSize, color: boxTheme?.iconColor?? AppColors.symbolsDark),
                             const SizedBox(width: 4),
                             Text(
                               "${route.duration.inMinutes} min",
                               style: TextStyle(
-                                  color: boxTheme.textColor, fontSize: 12),
+                                  color: boxTheme?.textColor?? AppColors.textLight, fontSize: 12),
                             ),
                           ],
                         ),
@@ -167,12 +167,12 @@ final stopText = route.mapstops.isNotEmpty
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.bolt,
-                                size: iconSize, color: boxTheme.iconColor),
+                                size: iconSize, color: boxTheme?.iconColor?? AppColors.symbolsDark),
                             const SizedBox(width: 4),
                             Text(
                               route.difficulty,
                               style: TextStyle(
-                                  color: boxTheme.textColor, fontSize: 12),
+                                  color: boxTheme?.textColor?? AppColors.textLight, fontSize: 12),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
