@@ -10,6 +10,7 @@ import '../widgets/badges_sheet.dart';
 import '../../auth/screens/login/login_screen.dart';
 //import '../../../data/services/firebasedata.dart';
 import 'package:get_storage/get_storage.dart';
+import 'accsettings.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
@@ -159,20 +160,13 @@ class ProfileScreen extends StatelessWidget {
   ),
 )),
 
-            ListTile(
-              leading: const Icon(Icons.language),
-              title: const Text("Language"),
-              onTap: () {
-                // Logic to show language picker
-              },
-            ),
 
             // 3. Update Email / Password
             ListTile(
               leading: const Icon(Icons.lock_outline),
               title: const Text("Account Security"),
               onTap: () {
-                // Navigation to a separate AccountSettingsScreen
+               Get.to(() => const AccountSettingsScreen());
               },
             ),
           ],

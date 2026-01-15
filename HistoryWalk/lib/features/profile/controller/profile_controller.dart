@@ -248,8 +248,9 @@ class ProfileController extends GetxController {
     return userProfile.value?.completedRoutes.contains(routeId) ?? false;
   }
 
-
-  // Add this line
+// =========================
+  // TOGGLE THEME HELPER
+  // =========================
 RxBool isDarkObservable =  false.obs;
 
 void toggleTheme(bool value) {
@@ -257,4 +258,44 @@ void toggleTheme(bool value) {
   Get.changeThemeMode(value ? m.ThemeMode.dark : m.ThemeMode.light);
   _box.write('isDarkMode', value);
 }
+
+// =========================
+  // ACCOUNT SETTINGS HELPER
+  // =========================
+
+Future<void> updateAccountSecurity({
+  required String newEmail,
+  required String newPassword,
+  required String currentPassword,
+}) async {
+  try {
+    User? user = _auth.currentUser;
+    if (user == null || user.email == null) return;
+
+    // 1. Re-authenticate
+    AuthCredential credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+    await user.reauthenticateWithCredential(credential);
+
+    // 2. Update Email if changed
+    if (newEmail != user.email) {
+      await user.updateEmail(newEmail);
+      // Update Firestore as well
+      await _db.collection('users').doc(user.uid).update({'email': newEmail});
+    }
+
+    // 3. Update Password if provided
+    if (newPassword.isNotEmpty) {
+      await user.updatePassword(newPassword);
+    }
+
+    Get.back(); // Close dialog
+    Get.snackbar("Success", "Account updated successfully", snackPosition: SnackPosition.BOTTOM);
+  } catch (e) {
+    Get.snackbar("Error", e.toString());
+  }
+}
+
 }
