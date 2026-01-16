@@ -7,6 +7,7 @@ import '../../profile/controller/profile_controller.dart';
 import '../../map/controller/map_controller.dart';
 import '../../reviews/controller/review_controller.dart';
 import '../screens/login/login_screen.dart';
+import '../../../navigation_menu.dart';
 
 class AuthController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -24,6 +25,30 @@ class AuthController extends GetxController {
     // Ακούει αν αλλάξει το login state (login / logout)
     firebaseUser.bindStream(_auth.authStateChanges());
   }
+
+  @override
+void onReady() {
+  super.onReady();
+  checkPersistentLogin();
+}
+
+void checkPersistentLogin() async {
+  User? user = _auth.currentUser;
+  bool shouldRemember = _box.read('REMEMBER_ME_BOOL') ?? false;
+
+  if (user != null && shouldRemember) {
+    // 1. User is logged in AND wants to be remembered
+    print("should remember user");
+    final profileController = Get.find<ProfileController>();
+    await profileController.fetchUserProfile(user.uid);
+    Get.offAll(() => const NavigationMenu());
+  } else {
+    // 2. No user OR they didn't tick "Remember Me"
+    // We sign out just in case Firebase kept a session alive
+    await _auth.signOut(); 
+    // Stay on login page
+  }
+}
 
   
   RxBool isLoading = false.obs;

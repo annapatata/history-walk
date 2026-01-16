@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:historywalk/common/layouts/section_screen.dart';
 import '../../routes/models/route_model.dart';
 import '../../reviews/widgets/reviewtile.dart';
-import '../../reviews/models/review_model.dart';
+import '../../../utils/helpers/fullscreenimage.dart';
 import '../../../common/widgets/primaryactionbutton.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
 import '../../reviews/widgets/writereview.dart';
@@ -22,15 +22,18 @@ class RouteDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-    reviewController.fetchReviews(route.id);
-  });
+      reviewController.fetchReviews(route.id);
+    });
     final bool isCompleted = profileController.isRouteCompleted(route.id);
-    final bool isReviewed = profileController.userProfile.value?.reviewedRoutes.contains(route.id)??false;
+    final bool isReviewed =
+        profileController.userProfile.value?.reviewedRoutes.contains(
+          route.id,
+        ) ??
+        false;
 
     String buttonLabel = 'START ROUTE';
-    if(isCompleted){
+    if (isCompleted) {
       buttonLabel = isReviewed ? 'EDIT YOUR REVIEW' : 'WRITE A REVIEW';
     }
     return Scaffold(
@@ -40,24 +43,26 @@ class RouteDetails extends StatelessWidget {
         child: PrimaryActionButton(
           label: buttonLabel,
           onPressed: () async {
-
-            if(isCompleted){
+            if (isCompleted) {
               showDialog(
-                context:context,
-                builder: (context) => WriteReviewModal(routeId: route.id,isEditing: isReviewed),
+                context: context,
+                builder: (context) =>
+                    WriteReviewModal(routeId: route.id, isEditing: isReviewed),
               );
             } else {
-            final MapController mapController = Get.find();
+              final MapController mapController = Get.find();
 
-            // 1. Trigger the fetch
-            // 2. IMPORTANT: Use 'await' so we don't move to the next screen until data is here
-            await mapController.loadRouteStops(route);
+              // 1. Trigger the fetch
+              // 2. IMPORTANT: Use 'await' so we don't move to the next screen until data is here
+              await mapController.loadRouteStops(route);
 
-            // 3. Now navigate
-            Get.to(() => MapScreen(selectedRoute: route));
-          }
+              // 3. Now navigate
+              Get.to(() => MapScreen(selectedRoute: route));
+            }
           },
-          backgroundcolour: isCompleted ? AppColors.stars : AppColors.searchBarDark,
+          backgroundcolour: isCompleted
+              ? AppColors.stars
+              : AppColors.searchBarDark,
         ),
       ),
 
@@ -123,94 +128,109 @@ class RouteDetails extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-             
-                Obx((){
+
+                Obx(() {
                   final allImages = reviewController.reviews
-                        .expand((r) => r.images ?? [])
-                        .toList();
-                
+                      .expand((r) => r.images ?? [])
+                      .toList();
+
                   if (allImages.isEmpty) return const SizedBox.shrink();
                   return Column(
                     children: [
+                      Text(
+                        'Photo Gallery (${allImages.length})',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
 
-                    Text(
-                  'Photo Gallery (${allImages.length})',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 110,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: allImages.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            // Capture the specific image URL for this index
+                            String imageUrl = allImages[index];
 
-                const SizedBox(height: 16),
-                   SizedBox(
-                    height: 110,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: allImages.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            allImages[index],
-                            fit: BoxFit.cover,
-                            width: 110,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                            return GestureDetector(
+                              onTap: () => Get.to(
+                                () => FullScreenImage(imageUrl: imageUrl),
+                              ),
+                              child: Hero(
+                                // Ensure the tag is unique by using the URL
+                                tag: imageUrl,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    width: 110,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ],
                   );
                 }),
 
                 const SizedBox(height: 16),
 
-              Obx((){
-                if (reviewController.isLoading.value) {
+                Obx(() {
+                  if (reviewController.isLoading.value) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   return Column(
                     children: [
                       Container(
-                  height: 30,
-                  color: AppColors.stars,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 10),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Reviews (${reviewController.reviews.length})',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
-                ...reviewController.reviews.take(3).map((r)=>
-                ReviewTile(review:r,onTap:(){})),
-
-
-                const SizedBox(height: 8),
-
-
-                if (reviewController.reviews.length > 3)
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ReviewsScreen(),
+                        height: 30,
+                        color: AppColors.stars,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Reviews (${reviewController.reviews.length})',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
-                      );
-                    },
-                    child: const Text('See All Reviews'),
-                  ),
+                      ),
+                      ...reviewController.reviews
+                          .take(3)
+                          .map((r) => ReviewTile(review: r, onTap: () {})),
 
-                const SizedBox(height: 20),
-              ],
+                      const SizedBox(height: 8),
+
+                      if (reviewController.reviews.length > 3)
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ReviewsScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text('See All Reviews'),
+                        ),
+
+                      const SizedBox(height: 20),
+                    ],
                   );
-              }),
+                }),
               ],
             ),
-          ),   
+          ),
 
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
@@ -222,7 +242,6 @@ class RouteDetails extends StatelessWidget {
               },
             ),
           ),
-          
         ],
       ),
     );
