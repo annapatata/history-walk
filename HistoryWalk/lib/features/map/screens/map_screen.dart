@@ -251,7 +251,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /*  Show bottom sheet with route progress and controls
   // Extracted Helper for drawing Pins (When Route Selected)
   Future<void> _drawMarkers(List<StopModel> stops) async {
     final ByteData bytes = await rootBundle.load('assets/icons/marker.png');
@@ -320,7 +319,7 @@ class _MapScreenState extends State<MapScreen> {
     await pointAnnotationManager?.createMulti(dotOptions);
   }
 
-  //  Show bottom sheet with route progress and controls
+  /*  Show bottom sheet with route progress and controls
   void _showRouteProgress(StopModel stop) {
     //initialize the audio and paragraphs in the controller
     final allStops = widget.selectedRoute!.mapstops;
