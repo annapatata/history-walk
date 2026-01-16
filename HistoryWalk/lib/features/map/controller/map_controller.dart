@@ -396,7 +396,7 @@ Future<void> loadAllRoutesWithStops() async {
             geometry: LineString(coordinates: futureCoords),
             lineColor: activeRoute.value!.color, 
             lineWidth: 6.0,
-            lineOpacity: 0.1, // Faded Opacity
+            lineOpacity: 0.2, // Faded Opacity
             lineJoin: LineJoin.ROUND,
           ),
         );
@@ -414,7 +414,7 @@ Future<void> loadAllRoutesWithStops() async {
             geometry: LineString(coordinates: futureCoords),
             lineColor: activeRoute.value!.color, 
             lineWidth: 6.0,
-            lineOpacity: 0.1, // Faded Opacity
+            lineOpacity: 0.2, // Faded Opacity
             lineJoin: LineJoin.ROUND,
           ),
         );
