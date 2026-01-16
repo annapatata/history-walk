@@ -24,9 +24,12 @@ class ProfileController extends GetxController {
 
   // 🧑 Preset avatars
   final List<String> presetAvatars = [
-    'assets/avatars/avatar_1.png',
-    'assets/avatars/avatar_2.png',
-    'assets/avatars/avatar_3.png',
+    'assets/avatars/explorer_female.png',
+    'assets/avatars/explorer_male.png',
+    'assets/avatars/mage_female.png',
+    'assets/avatars/mage_male.png',
+    'assets/avatars/scholar_female.png',
+    'assets/avatars/scholar_male.png',
   ];
 
   // =========================

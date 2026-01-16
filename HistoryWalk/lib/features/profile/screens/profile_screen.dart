@@ -194,20 +194,42 @@ class ProfileScreen extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-              Wrap(
-                spacing: 12,
-                children: controller.presetAvatars.map((avatar) {
-                  return GestureDetector(
-                    onTap: () {
-                      controller.selectPresetAvatar(avatar);
-                      Navigator.pop(context);
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: controller.presetAvatars.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                ),
+                itemBuilder: (context, index) {
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Το μέγεθος του κελιού
+                      final cellSize = constraints.maxWidth;
+
+                      // Avatar = 60% του κελιού (ρύθμισε το)
+                      final avatarRadius = cellSize * 0.3;
+
+                      final avatar = controller.presetAvatars[index];
+
+                      return Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            controller.selectPresetAvatar(avatar);
+                            Navigator.pop(context);
+                          },
+                          child: CircleAvatar(
+                            radius: avatarRadius,
+                            backgroundImage: AssetImage(avatar),
+                            backgroundColor: Colors.transparent,
+                          ),
+                        ),
+                      );
                     },
-                    child: CircleAvatar(
-                      radius: 30,
-                      backgroundImage: AssetImage(avatar),
-                    ),
                   );
-                }).toList(),
+                },
               ),
               const Divider(),
               ListTile(
