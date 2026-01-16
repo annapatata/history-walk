@@ -158,9 +158,6 @@ class MapController extends GetxController {
         duration: const Duration(seconds: 4),
       );
 
-      // Update the current stop (this updates the map UI automatically if bound)
-      currentStop.value = nextStop; 
-
       updateRouteVisualization();
       
       startStopPresentation(nextStop, allRouteStops); 
