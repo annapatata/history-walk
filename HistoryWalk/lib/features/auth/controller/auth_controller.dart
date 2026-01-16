@@ -103,7 +103,7 @@ class AuthController extends GetxController {
     profileController.userProfile.value = null; // Clear local user data
 
     // 2. Clear map/review data so the new user starts fresh
-    Get.find<MapController>().clearStops();
+    Get.find<MapController>().clearActiveRoute();
     Get.find<ReviewController>().reviews.clear();
 
     Get.offAll(()=> const LoginScreen());

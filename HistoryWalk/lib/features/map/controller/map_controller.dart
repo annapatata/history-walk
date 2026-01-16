@@ -32,9 +32,7 @@ class MapController extends GetxController {
 
   @override
   void onClose() {
-    flutterTts.stop();
-    paragraphs.clear();
-    currentParagraphIndex.value = 0;
+    clearActiveRoute();
     super.onClose();
   }
 
@@ -62,20 +60,22 @@ class MapController extends GetxController {
 
   // Call this when the user clicks on a marker or starts a stop
   void startStopPresentation(StopModel stop, List<StopModel> fullRoute) {
+
+    //  Check if we are already presenting this stop
+  if (currentStop.value?.id == stop.id && paragraphs.isNotEmpty) {
+    print("Already playing this stop, maintaining state.");
+    return; 
+  }
     flutterTts.stop();
     currentStop.value = stop;
     allRouteStops = fullRoute;
 
-    currentParagraphIndex.value = 0;
-    isPaused.value = false;
-    
     // Split the new historyContent by \n and clean empty lines
     paragraphs.value = stop.historyContent
         .split('\n')
         .where((p) => p.trim().isNotEmpty)
         .toList();
-    
-    print("paragraph length: ${paragraphs.length}");
+
     currentParagraphIndex.value = 0;
     isPaused.value = false;
     _readCurrentParagraph();
@@ -144,21 +144,14 @@ class MapController extends GetxController {
       // There IS a next stop
       StopModel nextStop = allRouteStops[currentIndex + 1];
       
-      
-      Get.back();// Close the "History/Details" sheet/page
-      
       Get.snackbar(
         "Stop Completed", 
         "Next destination: ${nextStop.name}",
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 4),
       );
-
-      // Update the current stop (this updates the map UI automatically if bound)
-      currentStop.value = nextStop; 
       
-      // Optionally: startStopPresentation(nextStop, allRouteStops); 
-      // Or wait for the user to reach the location and tap "Start"
+      startStopPresentation(nextStop, allRouteStops); 
     } else {
       // Route Finished
       await finalizeRoute();
@@ -200,7 +193,7 @@ class MapController extends GetxController {
         middleText: "You've unlocked new badges.",
         textConfirm: "Back to Routes",
         onConfirm: () {
-          clearStops();
+          clearActiveRoute();
           activeRoute.value = null;
           Get.offAll(() => const NavigationMenu());
         },
@@ -227,7 +220,7 @@ class MapController extends GetxController {
       StopModel prevStop = allRouteStops[currentIndex - 1];
       
       flutterTts.stop();
-      if(Get.isBottomSheetOpen ?? false) Get.back(); // Close the "History/Details" sheet/page
+      startStopPresentation(prevStop, allRouteStops);
       
       Get.snackbar(
         "Moved to Previous Stop", 
@@ -337,8 +330,12 @@ Future<void> loadAllRoutesWithStops() async {
     }
   }
 
-  /// Clears the current map state
-  void clearStops() {
-    stops.clear();
-  }
+  void clearActiveRoute() {
+  activeRoute.value = null;
+  currentStop.value = null;
+  paragraphs.clear();
+  currentParagraphIndex.value = 0;
+  flutterTts.stop();
+}
+
 }
