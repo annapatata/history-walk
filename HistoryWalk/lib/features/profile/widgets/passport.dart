@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
 import 'package:historywalk/utils/theme/extensions/passport_theme.dart';
+import '../controller/profile_controller.dart';
+import 'package:get/get.dart';
 
 class PassportCard extends StatelessWidget {
   const PassportCard({
@@ -190,25 +192,61 @@ class _BadgesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final passTheme = theme.extension<PassportTheme>();
+    final passTheme = Theme.of(context).extension<PassportTheme>();
+    final controller = Get.find<ProfileController>();
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 36,
         width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: passTheme?.iconColor?? AppColors.stars,
+          color: passTheme?.iconColor ?? AppColors.stars,
           borderRadius: BorderRadius.circular(10),
         ),
-        alignment: Alignment.center,
-        child: const Text(
-          'BADGES',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ===== BADGES TITLE =====
+            const Text(
+              'BADGES',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+
+            const SizedBox(height: 6),
+
+            // ===== BADGES PREVIEW ROW =====
+            SizedBox(
+              height: 32,
+              child: Obx(() {
+                final badges = controller.badges
+                    .where((b) => b.unlocked)
+                    .toList();
+
+                if (badges.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  itemCount: badges.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (context, index) {
+                    final badge = badges[index];
+                    return Image.asset(
+                      badge.iconPath,
+                      width: 26,
+                      height: 26,
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
         ),
       ),
     );

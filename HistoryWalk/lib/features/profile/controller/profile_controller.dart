@@ -4,6 +4,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
 import '../models/badge.dart';
+import '../../routes/models/route_model.dart';
+import '../../routes/controller/route_controller.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -299,6 +301,23 @@ Future<void> updateAccountSecurity({
   } catch (e) {
     Get.snackbar("Error", e.toString());
   }
+}
+
+List<String> get completedRouteImages {
+  final userRoutes = userProfile.value?.completedRoutes ?? [];
+  final routesController = Get.find<RouteController>();
+  List<String> images = [];
+
+  for (var routeId in userRoutes) {
+    try {
+      final route = routesController.allRoutes.firstWhere((r) => r.id == routeId);
+      images.add(route.routepic);
+    } catch (e) {
+      // route δεν βρέθηκε, απλά παράλειψη
+    }
+  }
+
+  return images;
 }
 
 }

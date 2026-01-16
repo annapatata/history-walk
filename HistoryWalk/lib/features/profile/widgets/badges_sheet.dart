@@ -32,17 +32,18 @@ class BadgesSheet extends StatelessWidget {
                   const Text(
                     'Badges',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   IconButton(
+                    visualDensity: VisualDensity.compact,
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
               // =========================
               // Badges Grid

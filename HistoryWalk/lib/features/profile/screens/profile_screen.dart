@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../auth/controller/auth_controller.dart';
 import '../controller/profile_controller.dart';
 import '../widgets/passport.dart';
+import '../widgets/walks_calendar.dart';
 import '../widgets/progressbar.dart';
 import 'package:historywalk/common/layouts/section_screen.dart';
 import '../widgets/badges_sheet.dart';
@@ -86,6 +87,11 @@ class ProfileScreen extends StatelessWidget {
               icon: const Icon(Icons.account_balance, size: 20),
             ),
 
+          const SizedBox(height: 24),
+          WalksCalendar(
+            userName: user.name,
+          ),
+
             const SizedBox(height: 32),
 
             // logout,settings
@@ -150,23 +156,22 @@ class ProfileScreen extends StatelessWidget {
             ),
             const Divider(),
 
-            // 1. Dark Mode Toggle
+              // 1. Dark Mode Toggle
             Obx(() => ListTile(
-  leading: const Icon(Icons.dark_mode),
-  title: const Text("Dark Mode"),
-  trailing: Switch(
-    value: controller.isDarkObservable.value, // Now using a real Rx variable
-    onChanged: (value) => controller.toggleTheme(value),
-  ),
-)),
-
+              leading: const Icon(Icons.dark_mode),
+              title: const Text("Dark Mode"),
+              trailing: Switch(
+                value: controller.isDarkObservable.value, // Now using a real Rx variable
+                onChanged: (value) => controller.toggleTheme(value),
+              ),
+            )),
 
             // 3. Update Email / Password
             ListTile(
               leading: const Icon(Icons.lock_outline),
               title: const Text("Account Security"),
               onTap: () {
-               Get.to(() => const AccountSettingsScreen());
+              Get.to(() => const AccountSettingsScreen());              
               },
             ),
           ],
