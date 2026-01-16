@@ -1,16 +1,23 @@
 import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:historywalk/features/profile/controller/profile_controller.dart';
 import 'package:historywalk/features/routes/screens/routes_screen.dart';
 import 'package:historywalk/navigation_menu.dart';
-// Assuming your model paths are correct
-import '../../routes/models/stopmodel.dart'; 
+import '../../routes/models/stopmodel.dart';
 import '../../routes/models/route_model.dart';
 import '../../profile/controller/badge_controller.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import '../controller/stop_controller.dart';
+
 
 class MapController extends GetxController {
   final FlutterTts flutterTts = FlutterTts();
+  
+  MapboxMap? mapboxMap;
+  PointAnnotationManager? pointAnnotationManager;
+  PolylineAnnotationManager? polylineAnnotationManager;
   
   final BadgeController badgeController = Get.find();
 
@@ -156,6 +163,8 @@ class MapController extends GetxController {
 
       // Update the current stop (this updates the map UI automatically if bound)
       currentStop.value = nextStop; 
+
+      updateRouteVisualization();
       
       // Optionally: startStopPresentation(nextStop, allRouteStops); 
       // Or wait for the user to reach the location and tap "Start"
@@ -238,6 +247,8 @@ class MapController extends GetxController {
 
       // Update the current stop
       currentStop.value = prevStop; 
+
+      updateRouteVisualization();
       
       startStopPresentation(prevStop, allRouteStops); 
     } else {
@@ -337,8 +348,86 @@ Future<void> loadAllRoutesWithStops() async {
     }
   }
 
+  Future<void> updateRouteVisualization() async {
+    if (polylineAnnotationManager == null || activeRoute.value == null || currentStop.value == null) {
+      print("⚠️ Managers or data missing in Controller");
+      return;
+    }
+
+    try {
+      // Clear existing lines
+      await polylineAnnotationManager?.deleteAll();
+
+      // Find where we are in the list
+      int currentIndex = allRouteStops.indexWhere((s) => s.id == currentStop.value!.id);
+      if (currentIndex == -1) return;
+
+      // --- SEGMENT A: Current Stop -> Next Stop (Full Opacity) ---
+      if (currentIndex < allRouteStops.length - 1) {
+        final List<StopModel> activeSegmentStops = [
+          allRouteStops[currentIndex],
+          allRouteStops[currentIndex + 1]
+        ];
+
+        // Fetch detailed path from Mapbox API
+        final activeCoords = await getRoadPath(activeSegmentStops);
+        
+        await polylineAnnotationManager?.create(
+          PolylineAnnotationOptions(
+            geometry: LineString(coordinates: activeCoords),
+            lineColor: activeRoute.value!.color,
+            lineWidth: 6.0,
+            lineOpacity: 1.0, // Full Opacity
+            lineJoin: LineJoin.ROUND,
+          ),
+        );
+      }
+
+      // --- SEGMENT B: Next Stop -> End of Route (Low Opacity) ---
+      // We start from 'next stop' to the end
+      if (currentIndex + 1 < allRouteStops.length - 1) {
+        final List<StopModel> futureSegmentStops = allRouteStops.sublist(currentIndex + 1);
+        
+        // Fetch detailed path for the rest of the route
+        final futureCoords = await getRoadPath(futureSegmentStops);
+
+        await polylineAnnotationManager?.create(
+          PolylineAnnotationOptions(
+            geometry: LineString(coordinates: futureCoords),
+            lineColor: activeRoute.value!.color, 
+            lineWidth: 6.0,
+            lineOpacity: 0.1, // Faded Opacity
+            lineJoin: LineJoin.ROUND,
+          ),
+        );
+      }
+
+      //Start stop to current stop segment
+      if (currentIndex >= 1) {
+        final List<StopModel> pastSegmentStops = allRouteStops.sublist(0, currentIndex+1);
+        
+        // Fetch detailed path for the rest of the route
+        final futureCoords = await getRoadPath(pastSegmentStops);
+
+        await polylineAnnotationManager?.create(
+          PolylineAnnotationOptions(
+            geometry: LineString(coordinates: futureCoords),
+            lineColor: activeRoute.value!.color, 
+            lineWidth: 6.0,
+            lineOpacity: 0.1, // Faded Opacity
+            lineJoin: LineJoin.ROUND,
+          ),
+        );
+      }
+      
+    } catch (e) {
+      print("❌ Error updating route visualization: $e");
+    }
+  }
+
   /// Clears the current map state
   void clearStops() {
     stops.clear();
   }
+  
 }

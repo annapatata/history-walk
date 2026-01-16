@@ -1,6 +1,5 @@
 // map_screen.dart
 import 'package:flutter/material.dart';
-import 'package:historywalk/common/widgets/searchbar.dart';
 import 'package:historywalk/navigation_menu.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'; // For the MapWidget and Controller
 import 'package:flutter/services.dart'; // If loading custom map styles or icons from assets
@@ -17,6 +16,7 @@ import 'package:historywalk/utils/constants/app_colors.dart';
 import '../../profile/controller/profile_controller.dart';
 import '../../reviews/widgets/writereview.dart';
 import 'package:historywalk/features/reviews/controller/review_controller.dart';
+import '../controller/stop_controller.dart';
 import 'dart:ui' as ui;
 
 class MapScreen extends StatefulWidget {
@@ -64,6 +64,8 @@ class _MapScreenState extends State<MapScreen> {
   void _focusOnFirstStop(List<StopModel> stops) {
     if (stops.isEmpty) return;
     _moveCameraToStop(stops[0]);
+    controller.currentStop.value = stops[0];
+    controller.updateRouteVisualization();
   }
 
   //  Function to find and move to user location
@@ -96,11 +98,8 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // 1. Map to link Mapbox IDs to your Route objects
+  //Map to link Mapbox IDs to Route objects
   final Map<String, RouteModel> _polylineToRouteMap = {};
-
-  // 2. A flag to ensure we don't register the click listener multiple times
-  bool _isRouteListenerAdded = false;
   
   // Show route details popup on polyline tap
   void _showRoutePopup(RouteModel route) {
@@ -169,135 +168,139 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _drawRoutes(List<RouteModel> routes) async {
-    if (polylineAnnotationManager == null || pointAnnotationManager == null) {
-      print("⚠️ Managers not ready yet");
-      return;
+    // If we have a selected route, we delegate drawing to the controller 
+    // to handle the "Segmented/Faded" logic using the API.
+    if (widget.selectedRoute != null) {
+      controller.activeRoute.value = widget.selectedRoute;
+      controller.allRouteStops = widget.selectedRoute!.mapstops;
+      // Trigger the specialized drawing logic
+      await controller.updateRouteVisualization();
+      
+      // We still need to draw the markers (Stations) here or in the controller.
+      // Let's do markers here for simplicity as per your existing code logic.
+      await _drawMarkers(widget.selectedRoute!.mapstops);
+      return; 
     }
 
+    // --- GLOBAL OVERVIEW MODE (No Route Selected) ---
+    // This logic draws ALL routes as STRAIGHT LINES.
+    
+    if (polylineAnnotationManager == null) return;
+    await polylineAnnotationManager?.deleteAll();
+    await pointAnnotationManager?.deleteAll(); // Clear dots
+
     try {
-
-      // Clear map and our local ID map
-      await polylineAnnotationManager?.deleteAll();
-      await pointAnnotationManager?.deleteAll();
-
-      // Load marker icon
-      final ByteData bytes = await rootBundle.load('assets/icons/marker.png');
-      final Uint8List markerImage = bytes.buffer.asUint8List();
-
       for (var route in routes) {
         final List<StopModel> stops = route.mapstops;
         if (stops.isEmpty) continue;
 
+        // Force Straight Lines
         final lineCoordinates = stops
             .map((s) => Position(s.location.longitude, s.location.latitude))
             .toList();
-        
+
         final geometry = LineString(coordinates: lineCoordinates);
 
-        // --- 1. Draw the VISIBLE "Metro Line" ---
-        // We don't need to capture its ID, it's just for looks.
+        // 1. Visible Line
         await polylineAnnotationManager?.create(
           PolylineAnnotationOptions(
             geometry: geometry,
-            lineColor: route.color, 
-            lineWidth: 6.0, // Standard visual width
+            lineColor: route.color,
+            lineWidth: 4.0, // Slightly thinner for overview
             lineJoin: LineJoin.ROUND,
-            // Ensure visible line is drawn below the tappable one
-            lineSortKey: 1.0, 
+            lineSortKey: 1.0,
           ),
         );
-        
-        // --- 2. Draw the INVISIBLE "Tappable Line" (Ghost Line) ---
-        // CHANGE: Only draw the ghost line if NO route is selected.
-        if (widget.selectedRoute == null) { // <--- ADD THIS CHECK
-          final tappableAnnotation = await polylineAnnotationManager?.create(
-            PolylineAnnotationOptions(
-              geometry: geometry,
-              lineColor: Colors.transparent.value, 
-              lineWidth: 35.0, // This was stealing your clicks!
-              lineJoin: LineJoin.ROUND,
-              lineSortKey: 2.0,
-            ),
-          );
 
-          if (tappableAnnotation != null) {
-            _polylineToRouteMap[tappableAnnotation.id] = route;
-          }
-        }
+        // 2. Ghost Line (Tappable)
+        final tappableAnnotation = await polylineAnnotationManager?.create(
+          PolylineAnnotationOptions(
+            geometry: geometry,
+            lineColor: Colors.transparent.value,
+            lineWidth: 30.0,
+            lineJoin: LineJoin.ROUND,
+            lineSortKey: 2.0,
+          ),
+        );
 
-        if (widget.selectedRoute != null) {
-          // 3. Draw the "Stations" (Markers remain the same)
-          final markerOptions = stops.map((stop) {
-            return PointAnnotationOptions(
-              geometry: Point(
-                coordinates: Position(
-                  stop.location.longitude,
-                  stop.location.latitude,
-                ),
-              ),
-              symbolSortKey: 3.0,
-              image: markerImage,
-              iconSize: 0.09,
-            );
-          }).toList();
-
-          final annotations = await pointAnnotationManager?.createMulti(markerOptions);
-
-          if (annotations != null) {
-            for (int i = 0; i < annotations.length; i++) {
-              markerToStopMap[annotations[i]!.id] = stops[i];
-            }
-          }
-        }
-        else {
-          // --- 3. Draw "Dots" for non-selected routes ---
-          
-          // GENERATE DOT IMAGE:
-          // We create a colored circle on the fly using the route's color.
-          final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
-          final Canvas canvas = Canvas(pictureRecorder);
-          const double size = 30.0; // The resolution of the dot (pixels)
-
-          final Paint paint = Paint()
-            ..color = Color(route.color) // Convert the int color to a Flutter Color
-            ..style = PaintingStyle.fill;
-
-          // Draw the circle
-          canvas.drawCircle(
-            Offset(size / 2, size / 2), 
-            size / 2, 
-            paint
-          );
-
-          // Convert canvas to a Uint8List image
-          final ui.Image image = await pictureRecorder
-              .endRecording()
-              .toImage(size.toInt(), size.toInt());
-          final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-          final Uint8List dotImage = byteData!.buffer.asUint8List();
-
-          // CREATE ANNOTATIONS:
-          final dotOptions = stops.map((stop) {
-            return PointAnnotationOptions(
-              geometry: Point(
-                coordinates: Position(
-                  stop.location.longitude,
-                  stop.location.latitude,
-                ),
-              ),
-              symbolSortKey: 1.0, // Ensure dots sit above lines
-              image: dotImage,    // Use the generated colored dot
-              iconSize: 1,      // Scale down visually if the 30px image is too big
-            );
-          }).toList();
-
-          await pointAnnotationManager?.createMulti(dotOptions);
+        if (tappableAnnotation != null) {
+          _polylineToRouteMap[tappableAnnotation.id] = route;
         }
         
+        // 3. Draw Dots (Your existing dot logic)
+        await _drawRouteDots(route, stops);
       }
     } catch (e) {
-      print("Error drawing routes: $e");
+      print("Error drawing overview routes: $e");
     }
+  }
+
+  // Extracted Helper for drawing Pins (When Route Selected)
+  Future<void> _drawMarkers(List<StopModel> stops) async {
+    final ByteData bytes = await rootBundle.load('assets/icons/marker.png');
+    final Uint8List markerImage = bytes.buffer.asUint8List();
+
+    final markerOptions = stops.map((stop) {
+      return PointAnnotationOptions(
+        geometry: Point(
+          coordinates: Position(stop.location.longitude, stop.location.latitude),
+        ),
+        symbolSortKey: 10.0,
+        image: markerImage,
+        iconSize: 0.15, // Adjust size as needed
+      );
+    }).toList();
+
+    final annotations = await pointAnnotationManager?.createMulti(markerOptions);
+    if (annotations != null) {
+      for (int i = 0; i < annotations.length; i++) {
+        markerToStopMap[annotations[i]!.id] = stops[i];
+      }
+    }
+  }
+
+  // Extracted Helper for drawing Dots (When No Route Selected)
+  Future<void> _drawRouteDots(RouteModel route, List<StopModel> stops) async {
+    // GENERATE DOT IMAGE:
+    // We create a colored circle on the fly using the route's color.
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    const double size = 40.0; // The resolution of the dot (pixels)
+
+    final Paint paint = Paint()
+      ..color = Color(route.color) // Convert the int color to a Flutter Color
+      ..style = PaintingStyle.fill;
+
+    // Draw the circle
+    canvas.drawCircle(
+      Offset(size / 2, size / 2), 
+      size / 2, 
+      paint
+    );
+
+    // Convert canvas to a Uint8List image
+    final ui.Image image = await pictureRecorder
+        .endRecording()
+        .toImage(size.toInt(), size.toInt());
+    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List dotImage = byteData!.buffer.asUint8List();
+
+    // CREATE ANNOTATIONS:
+    final dotOptions = stops.map((stop) {
+      return PointAnnotationOptions(
+        geometry: Point(
+          coordinates: Position(
+            stop.location.longitude,
+            stop.location.latitude,
+          ),
+        ),
+        symbolSortKey: 1.0,
+        image: dotImage,    // Use the generated colored dot
+        iconSize: 1,      // Scale down visually if the 30px image is too big
+      );
+    }).toList();
+
+    await pointAnnotationManager?.createMulti(dotOptions);
   }
 
   //  Show bottom sheet with route progress and controls
@@ -510,6 +513,10 @@ class _MapScreenState extends State<MapScreen> {
                   polylineAnnotationManager = await map.annotations
                       .createPolylineAnnotationManager();
 
+                  controller.mapboxMap = map;
+                  controller.pointAnnotationManager = pointAnnotationManager;
+                  controller.polylineAnnotationManager = polylineAnnotationManager;
+
                   // 3. Set up marker tap listener
 
                   pointAnnotationManager?.tapEvents(
@@ -534,33 +541,42 @@ class _MapScreenState extends State<MapScreen> {
 
                   // Give the platform channel a tiny breath to establish connection
                   await Future.delayed(const Duration(milliseconds: 100));
-                  // 2. Decide what data to show
-                  // If widget.selectedRoute is null, we are in "Global Map" mode
+                  // 4. Initial Draw
                   if (widget.selectedRoute != null) {
+                    // ACTIVE MODE
                     await controller.loadRouteStops(widget.selectedRoute!);
                     widget.selectedRoute!.mapstops = controller.stops;
-                    _drawRoutes([widget.selectedRoute!]);
-                  } else {
-                    await controller.loadAllRoutesWithStops();
-                    _drawRoutes(controller.allRoutes);
-                  }
-                  print("✅ 3. Markers and routes drawn on map");
-                } catch (e) {
-                  print("Error in map creation: $e");
-                } finally {
-                  controller.isLoading.value = false;
-                }
+                    
+                    // Set current stop if not set
+                    if(controller.currentStop.value == null && controller.stops.isNotEmpty){
+                      controller.currentStop.value = controller.stops[0];
+                    }
 
-                // If in route-specific mode, focus on the first stop
-                if (widget.selectedRoute != null) {
-                  _focusOnFirstStop(widget.selectedRoute!.mapstops);
-                } else {
-                  mapboxMap?.setCamera(
-                    CameraOptions(
-                      center: Point(coordinates: Position(23.7257, 37.9715)),
-                      zoom: 12.0,
-                    ),
-                  );
+                    // Draw using the logic defined in _drawRoutes (which delegates to controller)
+                    await _drawRoutes([widget.selectedRoute!]);
+                    
+                    // Focus Camera
+                    _focusOnFirstStop(widget.selectedRoute!.mapstops);
+
+                  } else {
+                    // OVERVIEW MODE
+                    await controller.loadAllRoutesWithStops();
+                    await _drawRoutes(controller.allRoutes);
+                  }
+
+                  // If in route-specific mode, focus on the first stop
+                  if (widget.selectedRoute != null) {
+                    _focusOnFirstStop(widget.selectedRoute!.mapstops);
+                  } else {
+                    mapboxMap?.setCamera(
+                      CameraOptions(
+                        center: Point(coordinates: Position(23.7257, 37.9715)),
+                        zoom: 12.0,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print("Error during map initialization: $e");
                 }
               },
             ),
@@ -640,16 +656,5 @@ Positioned(
         ),
       ),
     );
-  }
-}
-
-class PolylineClickListener implements OnPolylineAnnotationClickListener {
-  final Function(PolylineAnnotation) onTap;
-
-  PolylineClickListener({required this.onTap});
-
-  @override
-  void onPolylineAnnotationClick(PolylineAnnotation annotation) {
-    onTap(annotation);
   }
 }
