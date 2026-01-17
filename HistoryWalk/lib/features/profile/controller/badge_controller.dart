@@ -20,18 +20,18 @@ class BadgeController extends GetxController {
   void onRouteCompleted(String routeId) {
     print("🏁 Route completed: $routeId");
 
-    // 1️⃣ Route-based badge (id-based)
+    //  Route-based badge (id-based)
     _unlockBadge('route_$routeId');
 
-    // 2️⃣ Area completion (optional – future)
+    //  Area completion (optional – future)
     _checkAreaCompletion(routeId);
 
-    // 3️⃣ Milestones
+    //  Milestones
     _checkMilestones();
   }
 
   // =========================
-  // 🔓 Badge unlocking logic
+  //  Badge unlocking logic
   // =========================
 
   void _unlockBadge(String badgeId) {
@@ -60,7 +60,7 @@ class BadgeController extends GetxController {
     // Save to Firebase
     _saveBadgeToFirebase(profileController.badges[index]);
 
-    // 4️⃣ Προσθήκη 10 πόντων προόδου
+    // Προσθήκη 10 πόντων προόδου
     profileController.addProgress(10);
     
     // Feedback
@@ -75,7 +75,7 @@ class BadgeController extends GetxController {
   }
 
   // =========================
-  // 🗺️ Area badges (optional)
+  //  Area badges (optional)
   // =========================
 
   void _checkAreaCompletion(String routeId) {
@@ -86,28 +86,28 @@ class BadgeController extends GetxController {
   }
 
   // =========================
-  // 🏆 Milestones
+  //  Milestones
   // =========================
 
     void _checkMilestones() {
     final completedRoutes =
         profileController.userProfile.value?.completedRoutes ?? [];
 
-    // 🥇 First Walk
+    // First Walk
     if (completedRoutes.length >= 1) {
       _unlockBadge('first_walk');
     }
 
-    // 🔟 10 routes milestone
-    if (completedRoutes.length >= 10) {
-      _unlockBadge('milestone_10_routes');
+    // 5 routes milestone
+    if (completedRoutes.length >= 5) {
+      _unlockBadge('fifth_walk');
     }
 
     // εδώ μπαίνουν κι άλλα milestones
   }
 
   // =========================
-  // ☁️ Firebase
+  //  Firebase
   // =========================
 
   Future<void> _saveBadgeToFirebase(Badge badge) async {
