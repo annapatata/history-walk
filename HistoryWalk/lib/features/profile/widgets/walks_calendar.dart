@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/profile_controller.dart';
+import '../models/image_model.dart';
 
 class WalksCalendar extends StatelessWidget {
   const WalksCalendar({
@@ -47,7 +48,7 @@ class WalksCalendar extends StatelessWidget {
           }
 
           // Create a new reversed list to avoid modifying the original observable
-          final orderedImages = images.reversed.toList();
+          final orderedImages = images.toList();
 
           return ListView.separated(
             scrollDirection: Axis.horizontal,
@@ -59,7 +60,7 @@ class WalksCalendar extends StatelessWidget {
               
               // FIX 2: Pass the 'imageUrl' from the model
               // Ensure _RouteCard uses NetworkImage or Image.network
-              return _RouteCard(imagePath: memory.imageUrl);
+              return _RouteCard(memory: memory);
               },
             );
           }),
@@ -70,23 +71,48 @@ class WalksCalendar extends StatelessWidget {
 }
 
 class _RouteCard extends StatelessWidget {
-  const _RouteCard({
-    required this.imagePath,
-  });
+  final MemoryModel memory; // Ensure you are passing the model
 
-  final String imagePath;
-
+  const _RouteCard({super.key, required this.memory});
+  
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1, // τετράγωνο card
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Image.asset(
-          imagePath,
-          fit: BoxFit.cover,
+    const double cardSize = 110.0;
+
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          // 👇 CHANGE THIS FROM Image.asset TO Image.network
+          child: Image.network( 
+            memory.imageUrl,
+            width: cardSize,
+            height: cardSize,
+            fit: BoxFit.cover,
+            
+            // Loading Spinner
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                width: cardSize,
+                height: cardSize,
+                color: Colors.grey[200],
+                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              );
+            },
+            
+            // Error Handling (e.g. if internet is off)
+            errorBuilder: (context, error, stackTrace) => Container(
+              width: cardSize,
+              height: cardSize,
+              color: Colors.grey[300],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
+          ),
         ),
-      ),
+
+        // ... (Keep your Positioned icon code here) ...
+      ],
     );
   }
 }

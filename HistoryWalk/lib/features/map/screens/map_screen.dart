@@ -320,408 +320,233 @@ class _MapScreenState extends State<MapScreen> {
     await pointAnnotationManager?.createMulti(dotOptions);
   }
 
-  /*  Show bottom sheet with route progress and controls
-  void _showRouteProgress(StopModel stop) {
-    //initialize the audio and paragraphs in the controller
-    final allStops = widget.selectedRoute!.mapstops;
-    controller.startStopPresentation(stop, allStops);
-
-    showModalBottomSheet(
-      context: context,
-      isDismissible: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (context) {
-        return Obx(() {
-          // 1. Create safety variables
-          final stops = widget.selectedRoute?.mapstops ?? [];
-
-          // 2. Add a 'Guard Clause'
-          // If the list is empty, return a placeholder so it doesn't crash during closing
-          if (stops.isEmpty || controller.paragraphs.isEmpty) {
-            return const SizedBox.shrink();
-          }
-
-          // 3. Now define your conditions safely
-          final isLastParagraph =
-              controller.currentParagraphIndex.value >=
-              controller.paragraphs.length - 1;
-
-          final isLastStop = stops.isNotEmpty && stops.last.id == stop.id;
-          final bool isFinishState = isLastParagraph && isLastStop;
-
-          return Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                //handle for dragging
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-
-                if (stop.imageUrls.isNotEmpty)
-                  SizedBox(
-                    height: 180,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: stop.imageUrls.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(15),
-                            child: Image.asset(
-                              stop.imageUrls[index],
-                              width: 280,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Center(
-                                    child: Icon(Icons.broken_image, size: 50),
-                                  ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                const SizedBox(height: 15),
-
-                // Progress Bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: controller.progress,
-                    backgroundColor: Colors.grey[200],
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFFE9B32A),
-                    ),
-                    minHeight: 8,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Εμφάνιση αρίθμησης (π.χ. 2 / 5)
-                Text(
-                  "${controller.currentParagraphIndex.value + 1} από ${controller.paragraphs.length}",
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-
-                const SizedBox(height: 15),
-                Text(
-                  stop.name,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 15),
-
-                // 2. Το κείμενο της τρέχουσας παραγράφου
-                Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.3,
-                  ),
-                  child: SingleChildScrollView(
-                    child: Text(
-                      controller.paragraphs.isNotEmpty
-                          ? controller.paragraphs[controller
-                                .currentParagraphIndex
-                                .value]
-                          : "Loading...",
-                      style: const TextStyle(fontSize: 16, height: 1.5),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // 3. Controls (Play/Pause & Next)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      onPressed: () => controller.moveToPreviousStop(),
-                      icon: const Icon(
-                        Icons.skip_previous_rounded,
-                        size: 30,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => controller.previousParagraph(),
-                      icon: const Icon(
-                        Icons.keyboard_arrow_left_rounded,
-                        size: 35,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        controller.isPaused.value
-                            ? Icons.play_arrow_rounded
-                            : Icons.pause_rounded,
-                        size: 30,
-                        color: Colors.black87,
-                      ),
-                      onPressed: () => controller.togglePause(),
-                    ),
-
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        if (!isLastParagraph) {
-                          controller.nextParagraph();
-                        } else if (!isLastStop) {
-                          controller.moveToNextStop();
-                        } else {
-                          await controller.finalizeRoute();
-                        }
-                      },
-                      icon: Icon(
-                        isFinishState ? Icons.flag_rounded : Icons.skip_next,
-                      ),
-                      label: Text(isFinishState ? "FINISH" : "Next"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isFinishState
-                            ? Colors.green
-                            : const Color(0xFFE9B32A),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-              ],
-            ),
-          );
-        });
-      },
-    );
-  }*/
-
+  Future<void> _handleExit() async {
+    if (controller.activeRoute.value != null) {
+      if (widget.selectedRoute != null) {
+        Get.defaultDialog(
+          title: "End Route?",
+          middleText:
+              "Are you sure you want to stop now? Your progress won't be saved.",
+          textCancel: "Cancel",
+          textConfirm: "End Now",
+          confirmTextColor: Colors.white,
+          onConfirm: () {
+            controller.flutterTts.stop();
+            controller.activeRoute.value = null;
+            controller.currentStop.value = null;
+            controller.paragraphs.clear();
+            controller.currentParagraphIndex.value = 0;
+            Get.offAll(() => const NavigationMenu());
+          },
+        );
+      } else {
+        Get.offAll(() => const NavigationMenu());
+      }
+    }
+  }
+ 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            MapWidget(
-              // 1. Move your initial camera options here
-              cameraOptions: CameraOptions(
-                center: Point(coordinates: Position(23.7257, 37.9715)),
-                zoom: 12.0,
-              ),
-              onMapCreated: (MapboxMap map) async {
-                mapboxMap = map;
+    return PopScope(
+      canPop: false, // Disable automatic back navigation
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return; // If already popped, do nothing
+        _handleExit();      // Call our custom logic
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Stack(
+            children: [
+              MapWidget(
+                // 1. Move your initial camera options here
+                cameraOptions: CameraOptions(
+                  center: Point(coordinates: Position(23.7257, 37.9715)),
+                  zoom: 12.0,
+                ),
+                onMapCreated: (MapboxMap map) async {
+                  mapboxMap = map;
 
-                try {
-                  // 2. Create Managers (IMPORTANT: Must await)
-                  pointAnnotationManager = await map.annotations
-                      .createPointAnnotationManager();
-                  polylineAnnotationManager = await map.annotations
-                      .createPolylineAnnotationManager();
+                  try {
+                    // 2. Create Managers (IMPORTANT: Must await)
+                    pointAnnotationManager = await map.annotations
+                        .createPointAnnotationManager();
+                    polylineAnnotationManager = await map.annotations
+                        .createPolylineAnnotationManager();
 
-                  controller.mapboxMap = map;
-                  controller.pointAnnotationManager = pointAnnotationManager;
-                  controller.polylineAnnotationManager = polylineAnnotationManager;
+                    controller.mapboxMap = map;
+                    controller.pointAnnotationManager = pointAnnotationManager;
+                    controller.polylineAnnotationManager = polylineAnnotationManager;
 
-                  // 3. Set up marker tap listener
+                    // 3. Set up marker tap listener
 
-                  pointAnnotationManager?.tapEvents(
-                    onTap: (PointAnnotation annotation) {
-                      final stop = markerToStopMap[annotation.id];
-                      if (stop != null) {
-                        // 1. Get the list of stops from your widget's route
-                        final allStops = widget.selectedRoute?.mapstops ?? [];
+                    pointAnnotationManager?.tapEvents(
+                      onTap: (PointAnnotation annotation) {
+                        final stop = markerToStopMap[annotation.id];
+                        if (stop != null) {
+                          // 1. Get the list of stops from your widget's route
+                          final allStops = widget.selectedRoute?.mapstops ?? [];
 
-                        // 2. Simply tell the controller to start this stop
-                        // This will update 'currentStop', which triggers the UI to show up
-                        controller.startStopPresentation(stop, allStops);
-                      }
-                    },
-                  );
-                  polylineAnnotationManager?.tapEvents(
-                    onTap: (annotation) {
-                      // The listener will now trigger on the wide invisible line.
-                      // We look up the route associated with that invisible line's ID.
-                      final route = _polylineToRouteMap[annotation.id];
-                      if (route != null && widget.selectedRoute == null) {
-                        _showRoutePopup(route);
-                      }
-                    },
-                  );
-
-                  // Give the platform channel a tiny breath to establish connection
-                  await Future.delayed(const Duration(milliseconds: 100));
-                  // 4. Initial Draw
-                  if (widget.selectedRoute != null) {
-                    // ACTIVE MODE
-                    await controller.loadRouteStops(widget.selectedRoute!);
-                    widget.selectedRoute!.mapstops = controller.stops;
-                    
-                    // Set current stop if not set
-                    if(controller.currentStop.value == null && controller.stops.isNotEmpty){
-                      controller.currentStop.value = controller.stops[0];
-                    }
-
-                    // Draw using the logic defined in _drawRoutes (which delegates to controller)
-                    await _drawRoutes([widget.selectedRoute!]);
-                    
-                    // Focus Camera
-                    _focusOnFirstStop(widget.selectedRoute!.mapstops);
-
-                  } else {
-                    // OVERVIEW MODE
-                    await controller.loadAllRoutesWithStops();
-                    await _drawRoutes(controller.allRoutes);
-                  }
-
-                  // If in route-specific mode, focus on the first stop
-                  if (widget.selectedRoute != null) {
-                    _focusOnFirstStop(widget.selectedRoute!.mapstops);
-                  } else {
-                    mapboxMap?.setCamera(
-                      CameraOptions(
-                        center: Point(coordinates: Position(23.7257, 37.9715)),
-                        zoom: 12.0,
-                      ),
+                          // 2. Simply tell the controller to start this stop
+                          // This will update 'currentStop', which triggers the UI to show up
+                          controller.startStopPresentation(stop, allStops);
+                        }
+                      },
                     );
-                  }
-                } catch (e) {
-                  print("Error during map initialization: $e");
-                }
-              },
-            ),
-            Positioned(
-              top: 60,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    // Change color based on status: Red for ending, Green for starting
-                    backgroundColor: widget.selectedRoute != null
-                        ? Colors.redAccent
-                        : Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: const StadiumBorder(),
-                    elevation: 4,
-                  ),
-                  onPressed: () {
+                    polylineAnnotationManager?.tapEvents(
+                      onTap: (annotation) {
+                        // The listener will now trigger on the wide invisible line.
+                        // We look up the route associated with that invisible line's ID.
+                        final route = _polylineToRouteMap[annotation.id];
+                        if (route != null && widget.selectedRoute == null) {
+                          _showRoutePopup(route);
+                        }
+                      },
+                    );
+
+                    // Give the platform channel a tiny breath to establish connection
+                    await Future.delayed(const Duration(milliseconds: 100));
+                    // 4. Initial Draw
                     if (widget.selectedRoute != null) {
-                      Get.defaultDialog(
-                        title: "End Route?",
-                        middleText:
-                            "Are you sure you want to stop now? Your progress won't be saved.",
-                        textCancel: "Cancel",
-                        textConfirm: "End Now",
-                        confirmTextColor: Colors.white,
-                        onConfirm: () {
-                          controller.flutterTts.stop();
-                          controller.activeRoute.value = null;
-                          controller.currentStop.value = null;
-                          controller.paragraphs.clear();
-                          controller.currentParagraphIndex.value = 0;
-                          Get.offAll(() => const NavigationMenu());
-                        },
-                      );
+                      // ACTIVE MODE
+                      await controller.loadRouteStops(widget.selectedRoute!);
+                      widget.selectedRoute!.mapstops = controller.stops;
+                      
+                      // Set current stop if not set
+                      if(controller.currentStop.value == null && controller.stops.isNotEmpty){
+                        controller.currentStop.value = controller.stops[0];
+                      }
+
+                      // Draw using the logic defined in _drawRoutes (which delegates to controller)
+                      await _drawRoutes([widget.selectedRoute!]);
+                      
+                      // Focus Camera
+                      _focusOnFirstStop(widget.selectedRoute!.mapstops);
+
                     } else {
-                      Get.offAll(() => const NavigationMenu());
+                      // OVERVIEW MODE
+                      await controller.loadAllRoutesWithStops();
+                      await _drawRoutes(controller.allRoutes);
                     }
-                  },
-                  child: Text(
-                    // Change text based on status
-                    widget.selectedRoute != null
-                        ? "END ROUTE"
-                        : "START A ROUTE",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+
+                    // If in route-specific mode, focus on the first stop
+                    if (widget.selectedRoute != null) {
+                      _focusOnFirstStop(widget.selectedRoute!.mapstops);
+                    } else {
+                      mapboxMap?.setCamera(
+                        CameraOptions(
+                          center: Point(coordinates: Position(23.7257, 37.9715)),
+                          zoom: 12.0,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    print("Error during map initialization: $e");
+                  }
+                },
+              ),
+              Positioned(
+                top: 60,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      // Change color based on status: Red for ending, Green for starting
+                      backgroundColor: widget.selectedRoute != null
+                          ? Colors.redAccent
+                          : Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: const StadiumBorder(),
+                      elevation: 4,
+                    ),
+                    onPressed: _handleExit,
+                    child: Text(
+                      // Change text based on status
+                      widget.selectedRoute != null
+                          ? "END ROUTE"
+                          : "START A ROUTE",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),
-            ),
-            Obx(() {
-              if (controller.isLoading.value) {
-                return Container(
-                  color: Colors.white70,
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              } else {
-                return const SizedBox.shrink();
-              }
-            }),
-
-            // Floating Action Button for Location
-            Positioned(
-              bottom: 30,
-              right: 20,
-              child: FloatingActionButton(
-                backgroundColor: Colors.white,
-                onPressed: _goToUserLocation,
-                child: const Icon(
-                  Icons.my_location,
-                  color: Color.fromARGB(255, 233, 179, 42),
-                ),
-              ),
-            ),
-
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 10.0,
-                ),
-                //child: Column(children: [HWSearchBar()]),
-              ),
-            ),
-            // The Persistent Draggable Sheet
-            Obx(() {
-              if (controller.activeRoute.value == null) {
-                return const SizedBox.shrink();
-              }
-
-              // 2. Second, check if a stop has been selected to be displayed
-              if (controller.currentStop.value == null) {
-                return const SizedBox.shrink();
-              }
-                return DraggableScrollableSheet(
-                  initialChildSize: 0.18, // Only show the handle/title initially
-                  minChildSize: 0.18, // Minimum height (collapsed)
-                  maxChildSize: 0.8, // Maximum height (expanded)
-                  builder: (context, scrollController) {
-                    return Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(25),
-                        ),
-                        boxShadow: [
-                          BoxShadow(blurRadius: 10, color: Colors.black26),
-                        ],
-                      ),
-                      child: ListView(
-                        controller: scrollController,
-                        children: [
-                          _buildHeader(), // The small grey bar
-                          Obx(
-                            () =>
-                                _buildMainContent(controller.currentStop.value!),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
+              Obx(() {
+                if (controller.isLoading.value) {
+                  return Container(
+                    color: Colors.white70,
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                } else {
+                  return const SizedBox.shrink();
+                }
               }),
-            ],
+
+              // Floating Action Button for Location
+              Positioned(
+                bottom: 30,
+                right: 20,
+                child: FloatingActionButton(
+                  backgroundColor: Colors.white,
+                  onPressed: _goToUserLocation,
+                  child: const Icon(
+                    Icons.my_location,
+                    color: Color.fromARGB(255, 233, 179, 42),
+                  ),
+                ),
+              ),
+
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 10.0,
+                  ),
+                  //child: Column(children: [HWSearchBar()]),
+                ),
+              ),
+              // The Persistent Draggable Sheet
+              Obx(() {
+                if (controller.activeRoute.value == null) {
+                  return const SizedBox.shrink();
+                }
+
+                // 2. Second, check if a stop has been selected to be displayed
+                if (controller.currentStop.value == null) {
+                  return const SizedBox.shrink();
+                }
+                  return DraggableScrollableSheet(
+                    initialChildSize: 0.18, // Only show the handle/title initially
+                    minChildSize: 0.18, // Minimum height (collapsed)
+                    maxChildSize: 0.8, // Maximum height (expanded)
+                    builder: (context, scrollController) {
+                      return Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(25),
+                          ),
+                          boxShadow: [
+                            BoxShadow(blurRadius: 10, color: Colors.black26),
+                          ],
+                        ),
+                        child: ListView(
+                          controller: scrollController,
+                          children: [
+                            _buildHeader(), // The small grey bar
+                            Obx(
+                              () =>
+                                  _buildMainContent(controller.currentStop.value!),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ],
+            ),
           ),
-        ),
+        )
       );
     }
 

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:historywalk/features/auth/controller/auth_controller.dart';
-import 'package:historywalk/features/auth/screens/login/login_screen.dart';
-import 'package:historywalk/navigation_menu.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,19 +27,15 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   bool _hasNavigated = false;
-  void _handleAuthChanged(user) {
+  void _handleAuthChanged(user) async{
     if(_hasNavigated) return;
     // Μικρό delay για να φανεί το splash
     Future.delayed(const Duration(seconds: 2), () {
       if(_hasNavigated) return;
       _hasNavigated=true;
-      if (user == null) {
-        // NOT logged in → Login
-        Get.offAll(() => const LoginScreen());
-      } else {
-        // Logged in → App
-        Get.offAll(() => const NavigationMenu());
-      }
+
+      authController.checkPersistentLogin();
+      
     });
   }
 

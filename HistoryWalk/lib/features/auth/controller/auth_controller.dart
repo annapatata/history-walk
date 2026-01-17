@@ -47,6 +47,7 @@ void checkPersistentLogin() async {
     // We sign out just in case Firebase kept a session alive
     await _auth.signOut(); 
     // Stay on login page
+    Get.offAll(() => const LoginScreen());
   }
 }
 
@@ -121,6 +122,8 @@ void checkPersistentLogin() async {
   Future<void> logout() async {
   try {
     await _auth.signOut();
+
+    _box.write('REMEMBER_ME_BOOL', false);
 
     // 1. Manually clear the profile data
     _box.remove('user_profile');
