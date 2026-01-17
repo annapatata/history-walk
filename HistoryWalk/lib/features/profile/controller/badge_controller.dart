@@ -1,40 +1,46 @@
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/badge.dart';
 import '../../profile/controller/profile_controller.dart';
+import '../../routes/controller/route_controller.dart';
 
 class BadgeController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  /// Single source of truth για badges = ProfileController
+  /// Single source of truth για user state
   final ProfileController profileController = Get.find<ProfileController>();
+  final RouteController routeController = Get.find<RouteController>();
 
   @override
   void onInit() {
     super.onInit();
-    // Δεν κρατάμε local badges list εδώ
-    // Όλα διαβάζονται / γράφονται μέσω ProfileController
   }
+
+  // =========================
+  //  PUBLIC API
+  // =========================
 
   /// Καλείται όταν ολοκληρώνεται ένα route
   void onRouteCompleted(String routeId) {
-    print("🏁 Route completed: $routeId");
+    unlockBadge(
+      badgeId: 'route_$routeId',
+      rewardPoints: pointsForRoute(routeId),
+    );
 
-    //  Route-based badge (id-based)
-    _unlockBadge('route_$routeId');
-
-    //  Area completion (optional – future)
-    _checkAreaCompletion(routeId);
-
-    //  Milestones
+    // Milestones
     _checkMilestones();
   }
 
   // =========================
-  //  Badge unlocking logic
+  //  GENERIC BADGE UNLOCK
   // =========================
 
-  void _unlockBadge(String badgeId) {
+  void unlockBadge({
+    required String badgeId,
+    required int rewardPoints,
+    String snackbarTitle = "Badge Unlocked! 🏆",
+  }) {
     final index =
         profileController.badges.indexWhere((b) => b.id == badgeId);
 
@@ -50,7 +56,7 @@ class BadgeController extends GetxController {
       return;
     }
 
-    // Unlock badge
+    //  Unlock badge
     profileController.badges[index] =
         badge.copyWith(unlocked: true);
 
@@ -60,54 +66,83 @@ class BadgeController extends GetxController {
     // Save to Firebase
     _saveBadgeToFirebase(profileController.badges[index]);
 
-    // Προσθήκη 10 πόντων προόδου
-    profileController.addProgress(10);
-    
-    // Feedback
+    //  Add progress / XP
+    profileController.addProgress(rewardPoints);
+
+    //  UI feedback
     Get.snackbar(
-      "Badge Unlocked! 🏆",
+      snackbarTitle,
       badge.title,
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 3),
     );
 
-    print("✅ Badge unlocked: $badgeId");
+    print(
+      "✅ Badge unlocked: $badgeId (+$rewardPoints pts)",
+    );
   }
 
   // =========================
-  //  Area badges (optional)
+  //  REWARD LOGIC
   // =========================
 
-  void _checkAreaCompletion(String routeId) {
-    // Placeholder – μελλοντικά:
-    // 1. βρίσκεις areaId του route
-    // 2. ελέγχεις αν όλα τα routes του area ολοκληρώθηκαν
-    // 3. unlock area badge
+  int pointsForRoute(String routeId) {
+    final route = routeController.allRoutes
+        .firstWhere((r) => r.id == routeId);
+
+    return pointsForDifficulty(route.difficulty);
+  }
+
+  int pointsForDifficulty(String difficulty) {
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
+        return 5;
+      case 'medium':
+        return 10;
+      case 'hard':
+        return 20;
+      case 'extreme':
+        return 30;
+      default:
+        return 10;
+    }
   }
 
   // =========================
-  //  Milestones
+  //  MILESTONES
   // =========================
 
-    void _checkMilestones() {
+  void _checkMilestones() {
     final completedRoutes =
         profileController.userProfile.value?.completedRoutes ?? [];
 
-    // First Walk
     if (completedRoutes.length >= 1) {
-      _unlockBadge('first_walk');
+      unlockBadge(
+        badgeId: 'first_walk',
+        rewardPoints: 10,
+        snackbarTitle: "Milestone Achieved! 🎯",
+      );
     }
 
-    // 5 routes milestone
     if (completedRoutes.length >= 5) {
-      _unlockBadge('fifth_walk');
+      unlockBadge(
+        badgeId: 'fifth_walk',
+        rewardPoints: 25,
+        snackbarTitle: "Milestone Achieved! 🎯",
+      );
     }
 
-    // εδώ μπαίνουν κι άλλα milestones
+    if (completedRoutes.length >= 10) {
+      unlockBadge(
+        badgeId: 'tenth_walk',
+        rewardPoints: 50,
+        snackbarTitle: "Milestone Achieved! 🎯",
+      );
+    }
   }
 
   // =========================
-  //  Firebase
+  //  FIREBASE
   // =========================
 
   Future<void> _saveBadgeToFirebase(Badge badge) async {
