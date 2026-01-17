@@ -9,6 +9,7 @@ import '../../routes/controller/route_controller.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/image_model.dart';
 import 'package:flutter/material.dart' as m;
 
 class ProfileController extends GetxController {
@@ -253,26 +254,26 @@ class ProfileController extends GetxController {
     return userProfile.value?.completedRoutes.contains(routeId) ?? false;
   }
 
-// =========================
+  // =========================
   // TOGGLE THEME HELPER
   // =========================
-RxBool isDarkObservable =  false.obs;
+  RxBool isDarkObservable =  false.obs;
 
-void toggleTheme(bool value) {
-  isDarkObservable.value = value;
-  Get.changeThemeMode(value ? m.ThemeMode.dark : m.ThemeMode.light);
-  _box.write('isDarkMode', value);
-}
+  void toggleTheme(bool value) {
+    isDarkObservable.value = value;
+    Get.changeThemeMode(value ? m.ThemeMode.dark : m.ThemeMode.light);
+    _box.write('isDarkMode', value);
+  }
 
-// =========================
+  // =========================
   // ACCOUNT SETTINGS HELPER
   // =========================
 
-Future<void> updateAccountSecurity({
-  required String newEmail,
-  required String newPassword,
-  required String currentPassword,
-}) async {
+  Future<void> updateAccountSecurity({
+    required String newEmail,
+    required String newPassword,
+    required String currentPassword,
+  }) async {
   try {
     User? user = _auth.currentUser;
     if (user == null || user.email == null) return;
@@ -303,21 +304,54 @@ Future<void> updateAccountSecurity({
   }
 }
 
-List<String> get completedRouteImages {
-  final userRoutes = userProfile.value?.completedRoutes ?? [];
-  final routesController = Get.find<RouteController>();
-  List<String> images = [];
+  List<String> get completedRouteImages {
+    final userRoutes = userProfile.value?.completedRoutes ?? [];
+    final routesController = Get.find<RouteController>();
+    List<String> images = [];
 
-  for (var routeId in userRoutes) {
-    try {
-      final route = routesController.allRoutes.firstWhere((r) => r.id == routeId);
-      images.add(route.routepic);
-    } catch (e) {
-      // route δεν βρέθηκε, απλά παράλειψη
+    for (var routeId in userRoutes) {
+      try {
+        final route = routesController.allRoutes.firstWhere((r) => r.id == routeId);
+        images.add(route.routepic);
+      } catch (e) {
+        // route δεν βρέθηκε, απλά παράλειψη
+      }
     }
+
+    return images;
   }
 
-  return images;
-}
+  var userMemories = <MemoryModel>[].obs; // Observable list for UI
+
+  Future<void> fetchUserMemories({String? routeId}) async {
+      try {
+        final String? uid = Get.find<ProfileController>().userProfile.value?.uid;
+        if (uid == null) return;
+
+        Query query = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('memories')
+            .orderBy('timestamp', descending: true);
+
+        // Optional: Filter by specific route if provided
+        if (routeId != null) {
+          query = query.where('routeId', isEqualTo: routeId);
+        }
+
+        final snapshot = await query.get();
+
+        final List<MemoryModel> fetchedMemories = snapshot.docs
+            .map((doc) => MemoryModel.fromFirestore(doc.data() as Map<String, dynamic>))
+            .toList();
+
+        userMemories.assignAll(fetchedMemories);
+        
+        print("✅ Loaded ${fetchedMemories.length} memories");
+
+      } catch (e) {
+        print("❌ Error fetching memories: $e");
+      }
+  }
 
 }

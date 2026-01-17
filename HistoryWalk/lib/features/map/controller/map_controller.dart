@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:historywalk/features/profile/controller/profile_controller.dart';
 import 'package:historywalk/features/routes/screens/routes_screen.dart';
@@ -10,6 +12,9 @@ import '../../routes/models/route_model.dart';
 import '../../profile/controller/badge_controller.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import '../controller/stop_controller.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+
 
 
 class MapController extends GetxController {
@@ -425,6 +430,69 @@ Future<void> loadAllRoutesWithStops() async {
       
     } catch (e) {
       print("❌ Error updating route visualization: $e");
+    }
+  }
+
+   // Uploads the captured image to Firebase Storage
+  Future<void> uploadRouteImage(XFile imageFile) async {
+    try {
+      // 1. Check if we have user and route info
+      final String? uid = Get.find<ProfileController>().userProfile.value?.uid;
+      final String? routeId = activeRoute.value?.id;
+      final String? stopId = currentStop.value?.id;
+
+      if (uid == null || routeId == null) {
+        Get.snackbar("Error", "User or Route not identified");
+        return;
+      }
+
+      isLoading.value = true; // Show a loading indicator if you have one bound
+
+      // 2. Define the path: user_images/uid/routeId/stopId_timestamp.jpg
+      final String fileName = "${stopId ?? 'unknown'}_${DateTime.now().millisecondsSinceEpoch}.jpg";
+      final Reference storageRef = FirebaseStorage.instance
+          .ref()
+          .child("user_images")
+          .child(uid)
+          .child(routeId)
+          .child(fileName);
+
+      // 3. Upload the file
+      final File file = File(imageFile.path);
+      await storageRef.putFile(file);
+
+      final String downloadUrl = await storageRef.getDownloadURL();
+
+      // Save metadata to a subcollection or array
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('memories') // New subcollection for photos
+          .add({
+             'url': downloadUrl,
+             'routeId': routeId,
+             'stopId': stopId,
+             'stopName': currentStop.value?.name,
+             'timestamp': FieldValue.serverTimestamp(),
+          });
+
+      // 4. (Optional) Get the URL if you want to save it to Firestore later
+      // final String downloadUrl = await storageRef.getDownloadURL();
+      // print("Uploaded to: $downloadUrl");
+
+      Get.snackbar(
+        "Upload Complete", 
+        "Memory saved to cloud!",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+
+    } catch (e) {
+      print("Upload error: $e");
+      Get.snackbar("Upload Failed", "Could not upload image.");
+    } finally {
+      isLoading.value = false;
     }
   }
 

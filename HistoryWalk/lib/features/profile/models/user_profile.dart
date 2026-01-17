@@ -7,6 +7,7 @@ class UserProfile {
   final DateTime firstLoginDate;
   final int level;
   final int progress;
+  final List<String> imagesTaken;
   final List<String> completedRoutes;
   final List<String> reviewedRoutes;
 
@@ -19,6 +20,7 @@ class UserProfile {
     required this.progress,
     required this.uid,
     required this.email,
+    this.imagesTaken = const [],
     this.completedRoutes = const [],
     this.reviewedRoutes = const [],
   });
@@ -31,6 +33,7 @@ class UserProfile {
     String? avatarPath,
     int? level,
     int? progress,
+    List<String>? imagesTaken,
     List<String>? completedRoutes,
     List<String>? reviewedRoutes,
   }) {
@@ -43,6 +46,7 @@ class UserProfile {
       firstLoginDate: this.firstLoginDate,
       level: level ?? this.level,
       progress: progress ?? this.progress,
+      imagesTaken: imagesTaken ?? this.imagesTaken,
       completedRoutes: completedRoutes ?? this.completedRoutes,
       reviewedRoutes: reviewedRoutes ?? this.reviewedRoutes,
     );
@@ -62,6 +66,7 @@ class UserProfile {
       'firstLoginDate': firstLoginDate.toIso8601String(),
       'level': level,
       'progress': progress,
+      'imagesTaken': imagesTaken,
       'completedRoutes': completedRoutes,
       'reviewedRoutes': reviewedRoutes
     };
@@ -77,6 +82,7 @@ class UserProfile {
       firstLoginDate: DateTime.parse(json['firstLoginDate']),
       level: json['level'],
       progress: json['progress'],
+      imagesTaken: List<String>.from(json['imagesTaken'] ?? []),
       completedRoutes: List<String>.from(json['completedRoutes'] ?? []),
       reviewedRoutes: List<String>.from(json['reviewedRoutes'] ?? [])
     );

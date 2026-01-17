@@ -16,8 +16,9 @@ import 'package:historywalk/utils/constants/app_colors.dart';
 import '../../profile/controller/profile_controller.dart';
 import '../../reviews/widgets/writereview.dart';
 import 'package:historywalk/features/reviews/controller/review_controller.dart';
-import '../controller/stop_controller.dart';
 import 'dart:ui' as ui;
+import 'package:image_picker/image_picker.dart' as image_picker; // Import this
+
 
 class MapScreen extends StatefulWidget {
   final RouteModel? selectedRoute; // If null, show all routes
@@ -689,52 +690,98 @@ class _MapScreenState extends State<MapScreen> {
               if (controller.currentStop.value == null) {
                 return const SizedBox.shrink();
               }
-              return DraggableScrollableSheet(
-                initialChildSize: 0.1, // Only show the handle/title initially
-                minChildSize: 0.1, // Minimum height (collapsed)
-                maxChildSize: 0.8, // Maximum height (expanded)
-                builder: (context, scrollController) {
-                  return Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(25),
-                      ),
-                      boxShadow: [
-                        BoxShadow(blurRadius: 10, color: Colors.black26),
-                      ],
-                    ),
-                    child: ListView(
-                      controller: scrollController,
-                      children: [
-                        _buildHandle(), // The small grey bar
-                        Obx(
-                          () =>
-                              _buildMainContent(controller.currentStop.value!),
+                return DraggableScrollableSheet(
+                  initialChildSize: 0.18, // Only show the handle/title initially
+                  minChildSize: 0.18, // Minimum height (collapsed)
+                  maxChildSize: 0.8, // Maximum height (expanded)
+                  builder: (context, scrollController) {
+                    return Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(25),
                         ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            }),
-          ],
+                        boxShadow: [
+                          BoxShadow(blurRadius: 10, color: Colors.black26),
+                        ],
+                      ),
+                      child: ListView(
+                        controller: scrollController,
+                        children: [
+                          _buildHeader(), // The small grey bar
+                          Obx(
+                            () =>
+                                _buildMainContent(controller.currentStop.value!),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              }),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  Widget _buildHandle() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      alignment: Alignment.center,
-      child: Container(
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(2),
+  /*
+    Widget _buildHandle() {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        alignment: Alignment.center,
+        child: Container(
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
+      );
+    }
+  */
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // The Handle (Centered)
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // The Camera Button (Aligned Right)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(50),
+                onTap: _takePhoto, // Call the function here
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey[100], // Subtle background
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    color: Colors.black87,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -767,7 +814,7 @@ class _MapScreenState extends State<MapScreen> {
 
           // Reactive Counter
           Text(
-            "${currentIdx + 1} από $totalParagraphs",
+            "${currentIdx + 1} from $totalParagraphs",
             style: TextStyle(color: Colors.grey[600], fontSize: 12),
           ),
           const SizedBox(height: 5),
@@ -865,15 +912,25 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
-}
 
-class PolylineClickListener implements OnPolylineAnnotationClickListener {
-  final Function(PolylineAnnotation) onTap;
+  Future<void> _takePhoto() async {
+    final image_picker.ImagePicker picker = image_picker.ImagePicker();
+    try {
+      // Pick image from camera
+      final image_picker.XFile? photo = await picker.pickImage(source: image_picker.ImageSource.camera);
 
-  PolylineClickListener({required this.onTap});
 
-  @override
-  void onPolylineAnnotationClick(PolylineAnnotation annotation) {
-    onTap(annotation);
+      if (photo != null) {
+        await controller.uploadRouteImage(photo);
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Could not take photo: $e",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
   }
 }
