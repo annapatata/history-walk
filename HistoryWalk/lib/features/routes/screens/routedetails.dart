@@ -17,7 +17,7 @@ import '../../profile/controller/profile_controller.dart';
 class RouteDetails extends StatelessWidget {
   RouteDetails({required this.route, super.key});
   final RouteModel route;
-  final reviewController = Get.put(ReviewController());
+  final ReviewController reviewController = Get.find();
   final ProfileController profileController = Get.find();
 
   @override

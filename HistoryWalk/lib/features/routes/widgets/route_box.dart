@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:historywalk/utils/theme/extensions/route_box_theme.dart';
 import '../models/route_model.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
+import 'package:get/get.dart';
+import '../../reviews/controller/review_controller.dart';
 
 class RouteBox extends StatelessWidget {
   final RouteModel route;
@@ -11,12 +13,13 @@ class RouteBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
+      final ReviewController reviewController = Get.find();
     final screenWidth = MediaQuery.of(context).size.width;
     final theme = Theme.of(context);
     final boxTheme = theme.extension<RouteBoxTheme>();
 
     // Inside your RouteBox build method
-final stopText = route.mapstops.isNotEmpty 
+    final stopText = route.mapstops.isNotEmpty 
     ? route.mapstops.map((stop) => stop.name).join(", ") 
     : "Loading stops..."; // Fallback if data hasn't arrived yet
 
@@ -83,38 +86,33 @@ final stopText = route.mapstops.isNotEmpty
                     const SizedBox(height: 6),
 
                     // STARS + REVIEW COUNT
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Builder(builder: (_) {
-                          final stars = route.rating.clamp(0, 5).round();
-                          final reviewCount = route.reviewCount;
-                          return Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ...List.generate(
-                                stars,
-                                (i) => Icon(Icons.star,
-                                    color: boxTheme?.starColor?? AppColors.stars, size: iconSize),
-                              ),
-                              ...List.generate(
-                                5 - stars,
-                                (i) => Icon(Icons.star_border,
-                                    color: boxTheme?.starColor?? AppColors.stars, size: iconSize),
-                              ),
-                              Text(
-                                "  ($stars/5 · $reviewCount reviews)",
-                                style: TextStyle(
-                                  color: boxTheme?.textColor?? AppColors.textLight,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          );
-                        }),
-                      ],
-                    ),
+Obx(() {
+  // Check if the controller has a "live" update for THIS specific route
+  final liveStat = reviewController.routeStats[route.id];
+  
+  // Logic: 
+  // 1. If we just added/edited a review, use liveStat.
+  // 2. Else, use the RouteModel data.
+  final double displayRating = liveStat != null 
+      ? liveStat['rating'] 
+      : (route.rating ?? 0.0);
+      
+  final int displayCount = liveStat != null 
+      ? liveStat['count'] 
+      : (route.reviewCount ?? 0);
 
+  return Row(
+    children: [
+      ...List.generate(5, (i) => Icon(
+        i < displayRating.round() ? Icons.star : Icons.star_border,
+        color: AppColors.stars,
+        size: iconSize,
+      )),
+      const SizedBox(width: 4),
+      Text("($displayCount)"),
+    ],
+  );
+}),
                     const SizedBox(height: 6),
 
                     // STOP LIST

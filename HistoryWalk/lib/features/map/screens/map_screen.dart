@@ -740,7 +740,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMainContent(StopModel stop) {
-    // These variables must be inside the Obx (which we added in the previous step)
+    // These variables must be inside the Obx
     // to refresh when the controller values change.
     final currentIdx = controller.currentParagraphIndex.value;
     final totalParagraphs = controller.paragraphs.length;
@@ -814,7 +814,7 @@ class _MapScreenState extends State<MapScreen> {
           Text(
             controller.paragraphs.isNotEmpty
                 ? controller.paragraphs[currentIdx]
-                : "Loading...",
+                : "Click on a Stop to Begin",
             style: const TextStyle(fontSize: 16, height: 1.5),
           ),
 

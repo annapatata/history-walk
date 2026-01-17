@@ -39,7 +39,6 @@ class RouteModel {
   List<StopModel> mapstops;
   final double rating;
   final int reviewCount;
-  final bool isCompleted;
   final int color; 
 
   RouteModel({
@@ -55,7 +54,6 @@ class RouteModel {
     required this.rating,
     required this.reviewCount,
     required this.routepic,
-    this.isCompleted = false,
     required this.color,
   });
 
@@ -84,7 +82,7 @@ class RouteModel {
     stops: List<String>.from(data['stops'] ?? []),
     mapstops: [], // We leave this empty initially
     imageUrl: List<String>.from(data['imageUrl'] ?? []),
-    timePeriods: mappedPeriods, // Map these if you have a TimePeriod enum/class
+    timePeriods: mappedPeriods, 
     duration: Duration(minutes: data['duration_minutes'] ?? 0),
     color: data['color'] ?? 0xFF000000,
   );

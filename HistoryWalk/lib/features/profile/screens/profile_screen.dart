@@ -9,7 +9,7 @@ import '../widgets/progressbar.dart';
 import 'package:historywalk/common/layouts/section_screen.dart';
 import '../widgets/badges_sheet.dart';
 import '../../auth/screens/login/login_screen.dart';
-//import '../../../data/services/firebasedata.dart';
+import '../../../data/services/firebasedata.dart';
 import 'package:get_storage/get_storage.dart';
 import 'accsettings.dart';
 
@@ -93,6 +93,15 @@ class ProfileScreen extends StatelessWidget {
           ),
 
             const SizedBox(height: 32),
+
+   /*ElevatedButton(
+  onPressed: () async {
+    print("Starting seed...");
+    await seedDatabase(); // This calls the function I gave you
+    print("Seed finished!");
+  },
+  child: Text("Push Data to Firebase"),
+),*/
 
             // logout,settings
             const Divider(),

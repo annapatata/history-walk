@@ -83,6 +83,8 @@ class MapController extends GetxController {
         .where((p) => p.trim().isNotEmpty)
         .toList();
 
+    print("made paragraphs");
+
     currentParagraphIndex.value = 0;
     isPaused.value = false;
     _readCurrentParagraph();
