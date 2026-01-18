@@ -160,13 +160,13 @@ class _MapScreenState extends State<MapScreen> {
                     // 1. Trigger the fetch
                     await mapController.loadRouteStops(route);
                     mapController.activeRoute.value = route;
-                    // Start the first stop automatically
+                    /* Start the first stop automatically
                     if (mapController.stops.isNotEmpty) {
                       mapController.startStopPresentation(
                         mapController.stops.first,
                         mapController.stops,
                       );
-                    }
+                    }*/
                     // 3. Now navigate
                     Get.to(() => MapScreen(selectedRoute: route));
                   }
