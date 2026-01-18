@@ -50,15 +50,24 @@ In this demo version, the user can:
 
 -The app supports dark mode (Profile->Settings->Dark Mode) and allows the user to change their email/password.
 
-<h2 align="center" ><b>App Screenshots</b></h2>
+<h2 align="center"><b>App Screenshots</b></h2>
 
-![routespage](https://github.com/user-attachments/assets/51f247f8-1841-44d2-9f82-30e77ee54359)
-![mappage](https://github.com/user-attachments/assets/2afddb5f-ff0d-4d4d-8100-eedab87a8703)
-![profilepicture](https://github.com/user-attachments/assets/4aae99d2-c556-4c87-86ff-008cec8a6ad2)
-![filtering](https://github.com/user-attachments/assets/aec24e26-1e82-40ec-9b1f-a9b4ef0428b2)
-![darkmode](https://github.com/user-attachments/assets/41d0918e-e130-4ade-8ccb-f0b3f72faf1a)
-![login](https://github.com/user-attachments/assets/46e3f914-2e6a-460a-8200-58c19cc44514)
-![routedetails](https://github.com/user-attachments/assets/008184c8-5c7f-4f69-a8a7-0273c6282204)
-![inroute](https://github.com/user-attachments/assets/8ccbbde7-7895-4d51-89c6-306188d5655a)
-
+<table align="center">
+  <tr>
+    <td align="center"><b>Routes Page</b><br><img src="https://github.com/user-attachments/assets/51f247f8-1841-44d2-9f82-30e77ee54359" width="350"></td>
+    <td align="center"><b>Map View</b><br><img src="https://github.com/user-attachments/assets/2afddb5f-ff0d-4d4d-8100-eedab87a8703" width="350"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>User Profile</b><br><img src="https://github.com/user-attachments/assets/4aae99d2-c556-4c87-86ff-008cec8a6ad2" width="350"></td>
+    <td align="center"><b>Filtering Options</b><br><img src="https://github.com/user-attachments/assets/aec24e26-1e82-40ec-9b1f-a9b4ef0428b2" width="350"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Dark Mode</b><br><img src="https://github.com/user-attachments/assets/41d0918e-e130-4ade-8ccb-f0b3f72faf1a" width="350"></td>
+    <td align="center"><b>Login Screen</b><br><img src="https://github.com/user-attachments/assets/46e3f914-2e6a-460a-8200-58c19cc44514" width="350"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Route Details</b><br><img src="https://github.com/user-attachments/assets/008184c8-5c7f-4f69-a8a7-0273c6282204" width="350"></td>
+    <td align="center"><b>In-Route Experience</b><br><img src="https://github.com/user-attachments/assets/8ccbbde7-7895-4d51-89c6-306188d5655a" width="350"></td>
+  </tr>
+</table>
 
