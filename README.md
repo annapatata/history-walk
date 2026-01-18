@@ -13,7 +13,8 @@ HistoryWalk is an interactive mobile application designed to turn a stroll throu
   
 <h2 align="center" ><b>How to Install</b></h2>
 Follow these steps to get the demo running on your Android device:
-! FOR THE MAPS TO WORK, DON'T RUN IT ON AN EMULATOR.
+
+ * ## ! FOR THE MAPS TO WORK, DON'T RUN IT ON AN EMULATOR.
 
 Download: Click the Download Link Here.
 
