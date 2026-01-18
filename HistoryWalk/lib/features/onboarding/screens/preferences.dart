@@ -13,138 +13,124 @@ class PreferencesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF5E6),
-      body: Stack(
-        children: [
-          // 2. Content
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 40),
-                  const Center(
-                    child: Text(
-                      "I'm interested in...",
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF8B4513),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  _sectionHeader("Time Periods"),
-                  Obx(
-                    () => Column(
-                      children: [
-                        _buildPreferenceRow(
-                          label: "Ancient Greece",
-                          isSelected: controller.selectedPeriods.contains(
-                            "ancient",
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          child: Column(
+            children: [
+              // Expanded για να πάρει όλο το διαθέσιμο ύψος
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 40),
+                      const Center(
+                        child: Text(
+                          "I'm interested in...",
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF8B4513),
                           ),
-                          onTap: () => controller.togglePeriod("ancient"),
-                        ),
-                        _buildPreferenceRow(
-                          label: "Roman Empire",
-                          isSelected: controller.selectedPeriods.contains(
-                            "roman",
-                          ),
-                          onTap: () => controller.togglePeriod("roman"),
-                        ),
-                        _buildPreferenceRow(
-                          label: "Medieval Times",
-                          isSelected: controller.selectedPeriods.contains(
-                            "medieval",
-                          ),
-                          onTap: () => controller.togglePeriod("medieval"),
-                        ),
-                        _buildPreferenceRow(
-                          label: "Modern History",
-                          isSelected: controller.selectedPeriods.contains(
-                            "modern",
-                          ),
-                          onTap: () => controller.togglePeriod("modern"),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  _sectionHeader("Duration"),
-                  Obx(
-                    () => Column(
-                      children: [
-                        _buildPreferenceRow(
-                          label: "I like long walks",
-                          isSelected: controller.selectedDuration.contains(
-                            "60+ min",
-                          ),
-                          onTap: () => controller.toggleDuration("60+ min"),
-                        ),
-                        _buildPreferenceRow(
-                          label: "I have some free time",
-                          isSelected: controller.selectedDuration.contains(
-                            "30+ min",
-                          ),
-                          onTap: () => controller.toggleDuration("30+ min"),
-                        ),
-                        _buildPreferenceRow(
-                          label: "I'm busy but keen to learn",
-                          isSelected: controller.selectedDuration.contains(
-                            "15+ min",
-                          ),
-                          onTap: () => controller.toggleDuration("15+ min"),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const Spacer(),
-                  // 3. All Set Button
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // 1. Find the controller (or use Get.put if it's not alive yet)
-                        final routeController = Get.put(RouteController());
-
-                        // 2. Set the data directly
-                        routeController.preffilters(
-                          periods: controller.selectedPeriods,
-                          durations: controller.selectedDuration.toList(),
-                        );
-
-                        // 3. Navigate
-                        Get.offAll(() => const NavigationMenu());
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 60,
-                          vertical: 15,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 5,
-                      ),
-                      child: const Text(
-                        "ALL SET!",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 30),
+
+                      _sectionHeader("Time Periods"),
+                      Obx(
+                        () => Column(
+                          children: [
+                            _buildPreferenceRow(
+                              label: "Ancient Greece",
+                              isSelected: controller.selectedPeriods.contains("ancient"),
+                              onTap: () => controller.togglePeriod("ancient"),
+                            ),
+                            _buildPreferenceRow(
+                              label: "Roman Empire",
+                              isSelected: controller.selectedPeriods.contains("roman"),
+                              onTap: () => controller.togglePeriod("roman"),
+                            ),
+                            _buildPreferenceRow(
+                              label: "Medieval Times",
+                              isSelected: controller.selectedPeriods.contains("medieval"),
+                              onTap: () => controller.togglePeriod("medieval"),
+                            ),
+                            _buildPreferenceRow(
+                              label: "Modern History",
+                              isSelected: controller.selectedPeriods.contains("modern"),
+                              onTap: () => controller.togglePeriod("modern"),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                      _sectionHeader("Duration"),
+                      Obx(
+                        () => Column(
+                          children: [
+                            _buildPreferenceRow(
+                              label: "I like long walks",
+                              isSelected: controller.selectedDuration.contains("60+ min"),
+                              onTap: () => controller.toggleDuration("60+ min"),
+                            ),
+                            _buildPreferenceRow(
+                              label: "I have some free time",
+                              isSelected: controller.selectedDuration.contains("30+ min"),
+                              onTap: () => controller.toggleDuration("30+ min"),
+                            ),
+                            _buildPreferenceRow(
+                              label: "I'm busy but keen to learn",
+                              isSelected: controller.selectedDuration.contains("15+ min"),
+                              onTap: () => controller.toggleDuration("15+ min"),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
+                    ],
                   ),
-                  const SizedBox(height: 40),
-                ],
+                ),
               ),
-            ),
+
+              // Κουμπί πάντα visible
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    final routeController = Get.put(RouteController());
+                    routeController.preffilters(
+                      periods: controller.selectedPeriods,
+                      durations: controller.selectedDuration.toList(),
+                    );
+                    Get.offAll(() => const NavigationMenu());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 60,
+                      vertical: 15,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 5,
+                  ),
+                  child: const Text(
+                    "ALL SET!",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -178,7 +164,7 @@ class PreferencesScreen extends StatelessWidget {
               isSelected
                   ? Icons.favorite_rounded
                   : Icons.favorite_outline_rounded,
-              color: const Color(0xFFF39237), // Your orange color
+              color: const Color(0xFFF39237),
               size: 32,
             ),
             const SizedBox(width: 20),
