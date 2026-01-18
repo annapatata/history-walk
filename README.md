@@ -1,6 +1,6 @@
  <h1 align="center"><b>🦊HistoryWalk App Demo</b></h1>
-** Explore Athens through time with Milo the Curious Fox.**
-
+ 
+## Explore Athens through time with Milo the Curious Fox.
 HistoryWalk is an interactive mobile application designed to turn a stroll through the streets of Athens into an educational adventure. By blending navigation with storytelling, users can discover the city’s rich heritage at their own pace.
 
 ## 🛠 Technical Specifications
@@ -13,6 +13,7 @@ HistoryWalk is an interactive mobile application designed to turn a stroll throu
   
 <h2 align="center" ><b>How to Install</b></h2>
 Follow these steps to get the demo running on your Android device:
+! FOR THE MAPS TO WORK, DON'T RUN IT ON AN EMULATOR.
 
 Download: Click the Download Link Here.
 
