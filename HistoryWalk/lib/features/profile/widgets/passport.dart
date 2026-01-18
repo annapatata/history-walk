@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:historywalk/utils/constants/app_colors.dart';
 import 'package:historywalk/utils/theme/extensions/passport_theme.dart';
-import '../controller/profile_controller.dart';
+import '../controller/badge_controller.dart';
 import 'package:get/get.dart';
 
 class PassportCard extends StatelessWidget {
@@ -193,7 +193,7 @@ class _BadgesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final passTheme = Theme.of(context).extension<PassportTheme>();
-    final controller = Get.find<ProfileController>();
+    final controller = Get.find<BadgeController>();
 
     return GestureDetector(
       onTap: onTap,

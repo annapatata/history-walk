@@ -3,14 +3,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../controller/profile_controller.dart';
+import '../controller/badge_controller.dart';
 
 class BadgesSheet extends StatelessWidget {
   const BadgesSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<ProfileController>();
+    final controller = Get.find<BadgeController>();
 
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
