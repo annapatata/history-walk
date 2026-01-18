@@ -14,9 +14,9 @@ HistoryWalk is an interactive mobile application designed to turn a stroll throu
 <h2 align="center" ><b>How to Install</b></h2>
 Follow these steps to get the demo running on your Android device:
 
- * **! FOR THE MAPS TO WORK, DON'T RUN IT ON AN EMULATOR.**
+ * **MAKE SURE TO HAVE TEXT TO SPEECH in English enabled(Settings ->Language->Text-to-Speech**
 
-Download: Click the Download Link Here.
+Download: https://drive.google.com/file/d/1LRskbV1IhdRJDvzmRbNl5GNlux0o5any/view?usp=drive_link
 
 Open: Select Package Installer when the download completes.
 
