@@ -14,7 +14,7 @@ HistoryWalk is an interactive mobile application designed to turn a stroll throu
 <h2 align="center" ><b>How to Install</b></h2>
 Follow these steps to get the demo running on your Android device:
 
- * ## ! FOR THE MAPS TO WORK, DON'T RUN IT ON AN EMULATOR.
+ * **! FOR THE MAPS TO WORK, DON'T RUN IT ON AN EMULATOR.**
 
 Download: Click the Download Link Here.
 
@@ -26,19 +26,6 @@ Authorize: Toggle Allow from this source (or Accept).
 
 Install: Wait for the process to finish, and you’re ready to explore!
 
-HistoryWalk App Demo : How to download it 
-
-1)Click on the link:
-
-2)Open with Package Installer
-
-3)Press Settings 
-
-4)Allow from this source/Accept
-
-5)Wait for the app to install
-
-You're ready!
 
 <h2 align="center" ><b>Main Features</b></h2>
 
