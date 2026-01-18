@@ -346,6 +346,8 @@ class _MapScreenState extends State<MapScreen> {
       } else {
         Get.offAll(() => const NavigationMenu());
       }
+    } else {
+      Get.offAll(() => const NavigationMenu());
     }
   }
 
@@ -411,7 +413,10 @@ class _MapScreenState extends State<MapScreen> {
 
                           // 2. Simply tell the controller to start this stop
                           // This will update 'currentStop', which triggers the UI to show up
+                          
                           controller.startStopPresentation(stop, allStops);
+                          //controller.currentStop.value = stops[0];
+                          controller.updateRouteVisualization();
 
                           Future.delayed(const Duration(milliseconds: 100), () {
                             sheetController.animateTo(
