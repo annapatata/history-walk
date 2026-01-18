@@ -41,7 +41,7 @@ class WalksCalendar extends StatelessWidget {
           if (images.isEmpty) {
             return const Center(
               child: Text(
-                'No completed walks yet',
+                'Take a photo from a route!',
                 style: TextStyle(color: Colors.grey),
               ),
             );

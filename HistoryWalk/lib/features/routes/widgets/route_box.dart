@@ -18,7 +18,6 @@ class RouteBox extends StatelessWidget {
     final theme = Theme.of(context);
     final boxTheme = theme.extension<RouteBoxTheme>();
 
-    // Inside your RouteBox build method
     final stopText = route.mapstops.isNotEmpty 
     ? route.mapstops.map((stop) => stop.name).join(", ") 
     : "Loading stops..."; // Fallback if data hasn't arrived yet

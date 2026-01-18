@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controller/preferences_controller.dart';
 import 'package:get/get.dart';
-import '../../routes/screens/routes_screen.dart';
+import '../../routes/controller/route_controller.dart';
 import '../../../navigation_menu.dart';
 
 class PreferencesScreen extends StatelessWidget {
@@ -36,72 +36,107 @@ class PreferencesScreen extends StatelessWidget {
                   const SizedBox(height: 30),
 
                   _sectionHeader("Time Periods"),
-                  Obx(() => Column(
-                    children: [
-                      _buildPreferenceRow(
-                        label: "Ancient Greece",
-                        isSelected: controller.selectedPeriods.contains("ancient"),
-                        onTap: () => controller.togglePeriod("ancient"),
-                      ),
-                      _buildPreferenceRow(
-                        label: "Roman Empire",
-                        isSelected: controller.selectedPeriods.contains("roman"),
-                        onTap: () => controller.togglePeriod("roman"),
-                      ),
-                      _buildPreferenceRow(
-                        label: "Medieval Times",
-                        isSelected: controller.selectedPeriods.contains("medieval"),
-                        onTap: () => controller.togglePeriod("medieval"),
-                      ),
-                      _buildPreferenceRow(
-                        label: "Modern History",
-                        isSelected: controller.selectedPeriods.contains("modern"),
-                        onTap: () => controller.togglePeriod("modern"),
-                      ),
-                    ],
-                  )),
+                  Obx(
+                    () => Column(
+                      children: [
+                        _buildPreferenceRow(
+                          label: "Ancient Greece",
+                          isSelected: controller.selectedPeriods.contains(
+                            "ancient",
+                          ),
+                          onTap: () => controller.togglePeriod("ancient"),
+                        ),
+                        _buildPreferenceRow(
+                          label: "Roman Empire",
+                          isSelected: controller.selectedPeriods.contains(
+                            "roman",
+                          ),
+                          onTap: () => controller.togglePeriod("roman"),
+                        ),
+                        _buildPreferenceRow(
+                          label: "Medieval Times",
+                          isSelected: controller.selectedPeriods.contains(
+                            "medieval",
+                          ),
+                          onTap: () => controller.togglePeriod("medieval"),
+                        ),
+                        _buildPreferenceRow(
+                          label: "Modern History",
+                          isSelected: controller.selectedPeriods.contains(
+                            "modern",
+                          ),
+                          onTap: () => controller.togglePeriod("modern"),
+                        ),
+                      ],
+                    ),
+                  ),
 
                   const SizedBox(height: 20),
                   _sectionHeader("Duration"),
-                  Obx(() => Column(
-                    children: [
-                      _buildPreferenceRow(
-                        label: "I like long walks",
-                        isSelected: controller.selectedDuration.contains("60+ min"),
-                        onTap: () => controller.toggleDuration("60+ min"),
-                      ),
-                      _buildPreferenceRow(
-                        label: "I have some free time",
-                        isSelected: controller.selectedDuration.contains("30+ min"),
-                        onTap: () => controller.toggleDuration("30+ min"),
-                      ),
-                      _buildPreferenceRow(
-                        label: "I'm busy but keen to learn",
-                        isSelected: controller.selectedDuration.contains("15+ min"),
-                        onTap: () => controller.toggleDuration("15+ min"),
-                      ),
-                    ],
-                  )),
+                  Obx(
+                    () => Column(
+                      children: [
+                        _buildPreferenceRow(
+                          label: "I like long walks",
+                          isSelected: controller.selectedDuration.contains(
+                            "60+ min",
+                          ),
+                          onTap: () => controller.toggleDuration("60+ min"),
+                        ),
+                        _buildPreferenceRow(
+                          label: "I have some free time",
+                          isSelected: controller.selectedDuration.contains(
+                            "30+ min",
+                          ),
+                          onTap: () => controller.toggleDuration("30+ min"),
+                        ),
+                        _buildPreferenceRow(
+                          label: "I'm busy but keen to learn",
+                          isSelected: controller.selectedDuration.contains(
+                            "15+ min",
+                          ),
+                          onTap: () => controller.toggleDuration("15+ min"),
+                        ),
+                      ],
+                    ),
+                  ),
 
                   const Spacer(),
                   // 3. All Set Button
                   Center(
                     child: ElevatedButton(
                       onPressed: () {
-                        // Pass preferences to the next screen
-                        Get.offAll(NavigationMenu(), arguments: {
-                          'periods': controller.selectedPeriods,
-                          'durations': controller.selectedDuration.toList(),
-                        });
+                        // 1. Find the controller (or use Get.put if it's not alive yet)
+                        final routeController = Get.put(RouteController());
+
+                        // 2. Set the data directly
+                        routeController.preffilters(
+                          periods: controller.selectedPeriods,
+                          durations: controller.selectedDuration.toList(),
+                        );
+
+                        // 3. Navigate
+                        Get.offAll(() => const NavigationMenu());
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 15),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 60,
+                          vertical: 15,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
                         elevation: 5,
                       ),
-                      child: const Text("ALL SET!", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      child: const Text(
+                        "ALL SET!",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -129,34 +164,35 @@ class PreferencesScreen extends StatelessWidget {
   }
 
   Widget _buildPreferenceRow({
-  required String label,
-  required bool isSelected,
-  required VoidCallback onTap,
-}) {
-  return GestureDetector(
-    onTap: onTap,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Row(
-        children: [
-          Icon(
-            isSelected ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-            color: const Color(0xFFF39237), // Your orange color
-            size: 32,
-          ),
-          const SizedBox(width: 20),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Row(
+          children: [
+            Icon(
+              isSelected
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_outline_rounded,
+              color: const Color(0xFFF39237), // Your orange color
+              size: 32,
             ),
-          ),
-        ],
+            const SizedBox(width: 20),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 }

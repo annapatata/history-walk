@@ -128,6 +128,7 @@ class RouteDetails extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
+                _buildAnimatedRouteTimeline(route),
 
                 Obx(() {
                   final allImages = reviewController.reviews
@@ -246,4 +247,102 @@ class RouteDetails extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildAnimatedRouteTimeline(RouteModel route) {
+  final stops = route.mapstops;
+  if (stops.isEmpty) return const SizedBox.shrink();
+
+  // Use a Future.delayed to wait for the page transition to finish (approx 300-500ms)
+  return FutureBuilder(
+    future: Future.delayed(const Duration(milliseconds: 600)), 
+    builder: (context, snapshot) {
+      // While waiting, show the "empty" gray line so the layout doesn't jump
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return _buildStaticBaseLine(stops.length);
+      }
+
+      return TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 90000), // Slower for better effect
+        curve: Curves.easeOutCubic,
+        tween: Tween<double>(begin: 0.0, end: 1.0),
+        builder: (context, value, child) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              children: [
+                // 1. Background Gray Line
+                Container(height: 2, width: double.infinity, color: Colors.grey[200]),
+                
+                // 2. The Gold Drawing Line
+                LayoutBuilder(builder: (context, constraints) {
+                  return Container(
+                    height: 2,
+                    width: constraints.maxWidth * value,
+                    color: const Color(0xFFE9B32A),
+                  );
+                }),
+
+                // 3. The Pins and Text
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(stops.length, (index) {
+                    // Logic: Each pin appears when the line is 90% of the way to it
+                    double stopPosition = index / (stops.length - 1);
+                    bool isReached = value >= (stopPosition * 0.9);
+
+                    return AnimatedScale(
+                      duration: const Duration(milliseconds: 400),
+                      scale: isReached ? 1.0 : 0.0,
+                      curve: Curves.elasticOut,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE9B32A),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: const [BoxShadow(blurRadius: 2, color: Colors.black12)]
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: 50,
+                            child: Text(
+                              stops[index].name,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+// Helper to prevent layout jumping while waiting for delay
+Widget _buildStaticBaseLine(int stopCount) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+    child: Stack(
+      children: [
+        Container(height: 2, width: double.infinity, color: Colors.grey[200]),
+        const SizedBox(height: 40), // Height of the text area
+      ],
+    ),
+  );
 }

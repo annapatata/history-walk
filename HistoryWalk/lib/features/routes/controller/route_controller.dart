@@ -27,21 +27,15 @@ class RouteController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Handle incoming preferences from Onboarding
+    // Keep this as a backup if you still want to support direct argument passing
     if (Get.arguments != null) {
-      final List<String> periods = Get.arguments['periods'] ?? [];
-      if (periods.isNotEmpty) {
-        print('user chose period');
-        selectedPeriod.value = _mapToDisplayName(periods.first);
-      }
-      final List<String> durations = Get.arguments['durations'] ?? [];
-    if (durations.isNotEmpty) {
-      // Set the duration filter to whatever they picked (e.g., '60+ min')
-      print('user chose a duration');
-      selectedDuration.value = durations.first; 
+      preffilters(
+        periods: Get.arguments['periods'],
+        durations: Get.arguments['durations'],
+      );
+    } else {
+      fetchRoutesWithStops();
     }
-    }
-    fetchRoutesWithStops();
   }
 
   // Sorting Logic: Routes matching ANY active filter move to top
@@ -89,6 +83,17 @@ class RouteController extends GetxController {
 
     // A route "Matches" if it satisfies all active (non-'All') filters
     return periodMatch && difficultyMatch && durationMatch && searchMatch;
+  }
+
+  void preffilters({List<String>? periods, List<String>? durations}) {
+    if (periods != null && periods.isNotEmpty) {
+      selectedPeriod.value = _mapToDisplayName(periods.first);
+    }
+    if (durations != null && durations.isNotEmpty) {
+      selectedDuration.value = durations.first;
+    }
+    // Fetch data immediately with new filters
+    fetchRoutesWithStops();
   }
 
   void updateFilter(String type, String value) {

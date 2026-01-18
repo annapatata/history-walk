@@ -22,6 +22,7 @@ class ReviewsScreen extends StatelessWidget {
           children: [
             SectionScreenLayout(
               title: 'REVIEWS',
+              showSearch: false,
               body: Obx(()=>
                ListView.builder(
                 itemCount: controller.reviews.length,

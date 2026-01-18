@@ -19,7 +19,6 @@ import 'package:historywalk/features/reviews/controller/review_controller.dart';
 import 'dart:ui' as ui;
 import 'package:image_picker/image_picker.dart' as image_picker; // Import this
 
-
 class MapScreen extends StatefulWidget {
   final RouteModel? selectedRoute; // If null, show all routes
   const MapScreen({super.key, this.selectedRoute});
@@ -65,7 +64,7 @@ class _MapScreenState extends State<MapScreen> {
   void _focusOnFirstStop(List<StopModel> stops) {
     if (stops.isEmpty) return;
     _moveCameraToStop(stops[0]);
-    controller.currentStop.value = stops[0];
+    //controller.currentStop.value = stops[0];
     controller.updateRouteVisualization();
   }
 
@@ -101,7 +100,7 @@ class _MapScreenState extends State<MapScreen> {
 
   //Map to link Mapbox IDs to Route objects
   final Map<String, RouteModel> _polylineToRouteMap = {};
-  
+
   // Show route details popup on polyline tap
   void _showRoutePopup(RouteModel route) {
     final ReviewController reviewController = Get.put(ReviewController());
@@ -185,23 +184,23 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _drawRoutes(List<RouteModel> routes) async {
-    // If we have a selected route, we delegate drawing to the controller 
+    // If we have a selected route, we delegate drawing to the controller
     // to handle the "Segmented/Faded" logic using the API.
     if (widget.selectedRoute != null) {
       controller.activeRoute.value = widget.selectedRoute;
       controller.allRouteStops = widget.selectedRoute!.mapstops;
       // Trigger the specialized drawing logic
       await controller.updateRouteVisualization();
-      
+
       // We still need to draw the markers (Stations) here or in the controller.
       // Let's do markers here for simplicity as per your existing code logic.
       await _drawMarkers(widget.selectedRoute!.mapstops);
-      return; 
+      return;
     }
 
     // --- GLOBAL OVERVIEW MODE (No Route Selected) ---
     // This logic draws ALL routes as STRAIGHT LINES.
-    
+
     if (polylineAnnotationManager == null) return;
     await polylineAnnotationManager?.deleteAll();
     await pointAnnotationManager?.deleteAll(); // Clear dots
@@ -243,8 +242,8 @@ class _MapScreenState extends State<MapScreen> {
         if (tappableAnnotation != null) {
           _polylineToRouteMap[tappableAnnotation.id] = route;
         }
-        
-        // 3. Draw Dots (Your existing dot logic)
+
+        // 3. Draw Dots
         await _drawRouteDots(route, stops);
       }
     } catch (e) {
@@ -260,7 +259,10 @@ class _MapScreenState extends State<MapScreen> {
     final markerOptions = stops.map((stop) {
       return PointAnnotationOptions(
         geometry: Point(
-          coordinates: Position(stop.location.longitude, stop.location.latitude),
+          coordinates: Position(
+            stop.location.longitude,
+            stop.location.latitude,
+          ),
         ),
         symbolSortKey: 10.0,
         image: markerImage,
@@ -268,7 +270,9 @@ class _MapScreenState extends State<MapScreen> {
       );
     }).toList();
 
-    final annotations = await pointAnnotationManager?.createMulti(markerOptions);
+    final annotations = await pointAnnotationManager?.createMulti(
+      markerOptions,
+    );
     if (annotations != null) {
       for (int i = 0; i < annotations.length; i++) {
         markerToStopMap[annotations[i]!.id] = stops[i];
@@ -285,21 +289,21 @@ class _MapScreenState extends State<MapScreen> {
     const double size = 40.0; // The resolution of the dot (pixels)
 
     final Paint paint = Paint()
-      ..color = Color(route.color) // Convert the int color to a Flutter Color
+      ..color =
+          Color(route.color) // Convert the int color to a Flutter Color
       ..style = PaintingStyle.fill;
 
     // Draw the circle
-    canvas.drawCircle(
-      Offset(size / 2, size / 2), 
-      size / 2, 
-      paint
-    );
+    canvas.drawCircle(Offset(size / 2, size / 2), size / 2, paint);
 
     // Convert canvas to a Uint8List image
-    final ui.Image image = await pictureRecorder
-        .endRecording()
-        .toImage(size.toInt(), size.toInt());
-    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final ui.Image image = await pictureRecorder.endRecording().toImage(
+      size.toInt(),
+      size.toInt(),
+    );
+    final ByteData? byteData = await image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
     final Uint8List dotImage = byteData!.buffer.asUint8List();
 
     // CREATE ANNOTATIONS:
@@ -312,8 +316,8 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
         symbolSortKey: 1.0,
-        image: dotImage,    // Use the generated colored dot
-        iconSize: 1,      // Scale down visually if the 30px image is too big
+        image: dotImage, // Use the generated colored dot
+        iconSize: 1, // Scale down visually if the 30px image is too big
       );
     }).toList();
 
@@ -344,14 +348,32 @@ class _MapScreenState extends State<MapScreen> {
       }
     }
   }
- 
+
+  final DraggableScrollableController sheetController =
+      DraggableScrollableController();
+  void toggleSheet() {
+    if (sheetController.size < 0.3) {
+      sheetController.animateTo(
+        0.8,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    } else {
+      sheetController.animateTo(
+        0.18,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false, // Disable automatic back navigation
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return; // If already popped, do nothing
-        _handleExit();      // Call our custom logic
+        _handleExit(); // Call our custom logic
       },
       child: Scaffold(
         body: SafeArea(
@@ -375,7 +397,8 @@ class _MapScreenState extends State<MapScreen> {
 
                     controller.mapboxMap = map;
                     controller.pointAnnotationManager = pointAnnotationManager;
-                    controller.polylineAnnotationManager = polylineAnnotationManager;
+                    controller.polylineAnnotationManager =
+                        polylineAnnotationManager;
 
                     // 3. Set up marker tap listener
 
@@ -389,6 +412,14 @@ class _MapScreenState extends State<MapScreen> {
                           // 2. Simply tell the controller to start this stop
                           // This will update 'currentStop', which triggers the UI to show up
                           controller.startStopPresentation(stop, allStops);
+
+                          Future.delayed(const Duration(milliseconds: 100), () {
+                            sheetController.animateTo(
+                              0.6, // Open halfway so they see the content immediately
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeOutBack,
+                            );
+                          });
                         }
                       },
                     );
@@ -410,18 +441,18 @@ class _MapScreenState extends State<MapScreen> {
                       // ACTIVE MODE
                       await controller.loadRouteStops(widget.selectedRoute!);
                       widget.selectedRoute!.mapstops = controller.stops;
-                      
-                      // Set current stop if not set
-                      if(controller.currentStop.value == null && controller.stops.isNotEmpty){
+
+                      /* Set current stop if not set
+                      if (controller.currentStop.value == null &&
+                          controller.stops.isNotEmpty) {
                         controller.currentStop.value = controller.stops[0];
-                      }
+                      }*/
 
                       // Draw using the logic defined in _drawRoutes (which delegates to controller)
                       await _drawRoutes([widget.selectedRoute!]);
-                      
+
                       // Focus Camera
                       _focusOnFirstStop(widget.selectedRoute!.mapstops);
-
                     } else {
                       // OVERVIEW MODE
                       await controller.loadAllRoutesWithStops();
@@ -434,7 +465,9 @@ class _MapScreenState extends State<MapScreen> {
                     } else {
                       mapboxMap?.setCamera(
                         CameraOptions(
-                          center: Point(coordinates: Position(23.7257, 37.9715)),
+                          center: Point(
+                            coordinates: Position(23.7257, 37.9715),
+                          ),
                           zoom: 12.0,
                         ),
                       );
@@ -510,62 +543,77 @@ class _MapScreenState extends State<MapScreen> {
                   return const SizedBox.shrink();
                 }
 
-                // 2. Second, check if a stop has been selected to be displayed
+                /* 2. Second, check if a stop has been selected to be displayed
                 if (controller.currentStop.value == null) {
                   return const SizedBox.shrink();
-                }
-                  return DraggableScrollableSheet(
-                    initialChildSize: 0.18, // Only show the handle/title initially
-                    minChildSize: 0.18, // Minimum height (collapsed)
-                    maxChildSize: 0.8, // Maximum height (expanded)
-                    builder: (context, scrollController) {
-                      return Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(25),
-                          ),
-                          boxShadow: [
-                            BoxShadow(blurRadius: 10, color: Colors.black26),
-                          ],
-                        ),
-                        child: ListView(
-                          controller: scrollController,
-                          children: [
-                            _buildHeader(), // The small grey bar
-                            Obx(
-                              () =>
-                                  _buildMainContent(controller.currentStop.value!),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                }),
-              ],
-            ),
-          ),
-        )
-      );
-    }
+                }*/
 
-  /*
-    Widget _buildHandle() {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        alignment: Alignment.center,
-        child: Container(
-          width: 40,
-          height: 4,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(2),
+                return DraggableScrollableSheet(
+                  controller: sheetController,
+                  initialChildSize:
+                      0.18, // Only show the handle/title initially
+                  minChildSize: 0.18, // Minimum height (collapsed)
+                  maxChildSize: 0.8, // Maximum height (expanded)
+                  builder: (context, scrollController) {
+                    return Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(25),
+                        ),
+                        boxShadow: [
+                          BoxShadow(blurRadius: 10, color: Colors.black26),
+                        ],
+                      ),
+                      child: ListView(
+                        controller: scrollController,
+                        children: [
+                          _buildHeader(), // The small grey bar
+                          Obx(() {
+                            if (controller.currentStop.value == null) {
+                              // STATE A: Waiting for marker click
+                              return _buildWaitingState();
+                            } else {
+                              // STATE B: Active Stop Presentation
+                              return _buildMainContent(
+                                controller.currentStop.value!,
+                              );
+                            }
+                          }),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              }),
+            ],
           ),
         ),
-      );
-    }
-  */
+      ),
+    );
+  }
+
+Widget _buildWaitingState() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 20),
+    child: Center(
+      child: Column(
+        children: [
+          Icon(Icons.touch_app_outlined, color: Colors.grey[400], size: 30),
+          const SizedBox(height: 8),
+          Text(
+            "Click on a map marker to begin the tour",
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 15,
+              fontWeight: FontWeight.w500
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _buildHeader() {
     return Container(
@@ -574,15 +622,24 @@ class _MapScreenState extends State<MapScreen> {
         alignment: Alignment.center,
         children: [
           // The Handle (Centered)
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+          GestureDetector(
+            onTap: toggleSheet, // Call the toggle function
+            behavior:
+                HitTestBehavior.opaque, // Ensures the tap area is easy to hit
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                vertical: 10,
+              ), // Bigger tap target
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
           ),
-
           // The Camera Button (Aligned Right)
           Align(
             alignment: Alignment.centerRight,
@@ -617,8 +674,7 @@ class _MapScreenState extends State<MapScreen> {
     final currentIdx = controller.currentParagraphIndex.value;
     final totalParagraphs = controller.paragraphs.length;
     final isPaused = controller.isPaused.value;
-    final activeStop =controller.currentStop.value!;
-
+    final activeStop = controller.currentStop.value!;
 
     final isLastParagraph = currentIdx >= totalParagraphs - 1;
     final isLastStop =
@@ -742,8 +798,9 @@ class _MapScreenState extends State<MapScreen> {
     final image_picker.ImagePicker picker = image_picker.ImagePicker();
     try {
       // Pick image from camera
-      final image_picker.XFile? photo = await picker.pickImage(source: image_picker.ImageSource.camera);
-
+      final image_picker.XFile? photo = await picker.pickImage(
+        source: image_picker.ImageSource.camera,
+      );
 
       if (photo != null) {
         await controller.uploadRouteImage(photo);
