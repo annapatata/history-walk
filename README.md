@@ -3,6 +3,14 @@
 
 HistoryWalk is an interactive mobile application designed to turn a stroll through the streets of Athens into an educational adventure. By blending navigation with storytelling, users can discover the city’s rich heritage at their own pace.
 
+## 🛠 Technical Specifications
+* **Framework:** Flutter
+* **Maps Provider:** Mapbox SDK
+* **Backend:** Firebase (Authentication & Firestore)
+* **Android SDK:** Min SDK 21 / Target SDK 34
+* **System Image:** Recommended with **Google Play Services**.
+* **Permissions:** Requires `Internet` and `Fine Location` access.
+  
 <h2 align="center" ><b>How to Install</b></h2>
 Follow these steps to get the demo running on your Android device:
 
